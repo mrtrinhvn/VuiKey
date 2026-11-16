@@ -120,7 +120,7 @@ static void init_ui(const char *icon_dir, int show_window_initially, int enabled
     );
     app_indicator_set_status(indicator, APP_INDICATOR_STATUS_ACTIVE);
     app_indicator_set_title(indicator, "VuiKey Vietnamese Input");
-    app_indicator_set_label(indicator, enabled ? "VN" : "EN", "VN");
+    app_indicator_set_label(indicator, "", "");
 
     GtkWidget *menu = gtk_menu_new();
     GtkWidget *item_show = gtk_menu_item_new_with_label("⚙️ Mở Bảng Điều Khiển VuiKey Studio...");
@@ -291,7 +291,7 @@ static gboolean idle_update_state(gpointer data) {
     StateUpdate *st = (StateUpdate *)data;
     if (indicator) {
         app_indicator_set_icon_full(indicator, st->enabled ? "vuikey-vn" : "vuikey-en", "VuiKey");
-        app_indicator_set_label(indicator, st->enabled ? "VN" : "EN", "VN");
+        app_indicator_set_label(indicator, "", "");
     }
     if (status_btn) {
         gtk_button_set_label(GTK_BUTTON(status_btn),

@@ -71,7 +71,7 @@ cat << 'EOF' > ~/.local/share/fcitx5/inputmethod/vuikey.conf
 [InputMethod]
 Name[vi]=VuiKey (Tiếng Việt)
 Name=VuiKey (Tiếng Việt)
-Icon=fcitx-unikey
+Icon=vuikey
 LangCode=vi
 Addon=vuikey
 Configurable=False

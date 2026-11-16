@@ -20,7 +20,7 @@ public:
     std::vector<InputMethodEntry> listInputMethods() override {
         std::vector<InputMethodEntry> result;
         result.emplace_back("vuikey", "VuiKey (Tiếng Việt)", "vi", "vuikey");
-        result.back().setLabel("VN").setIcon("fcitx-unikey");
+        result.back().setLabel("VN").setIcon("vuikey");
         return result;
     }
 

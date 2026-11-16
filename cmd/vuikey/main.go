@@ -200,34 +200,44 @@ func installDesktopAndAutostart() error {
 	_ = os.Remove(symlinkPath)
 	_ = os.Symlink(exe, symlinkPath)
 
-	// 2. Desktop application entry (~/.local/share/applications/vuikey.desktop)
+	// 2. Install VuiKey SVG icon into ~/.local/share/icons/hicolor/scalable/apps/vuikey.svg
+	iconAppDir := filepath.Join(home, ".local", "share", "icons", "hicolor", "scalable", "apps")
+	_ = os.MkdirAll(iconAppDir, 0755)
+	vuikeySVG := `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <rect x="2" y="6" width="60" height="52" rx="14" fill="#10b981" stroke="#059669" stroke-width="3"/>
+  <text x="32" y="42" text-anchor="middle" fill="#ffffff" font-family="Ubuntu, Inter, sans-serif" font-size="28" font-weight="900">VN</text>
+</svg>`
+	iconSVGPath := filepath.Join(iconAppDir, "vuikey.svg")
+	_ = os.WriteFile(iconSVGPath, []byte(vuikeySVG), 0644)
+
+	// 3. Desktop application entry (~/.local/share/applications/vuikey.desktop)
 	appDir := filepath.Join(home, ".local", "share", "applications")
 	_ = os.MkdirAll(appDir, 0755)
 	desktopContent := fmt.Sprintf(`[Desktop Entry]
 Type=Application
-Name=VuiKey Studio (Bộ Gõ Tiếng Việt Zero-Preedit)
+Name=VuiKey Studio (Bộ Gõ Tiếng Việt)
 GenericName=Vietnamese Input Method
-Comment=Bộ gõ Tiếng Việt Zero-Preedit phát triển bởi Công ty TNHH eChip (echipco.com) & VuiCaHat.com
+Comment=Bộ gõ Tiếng Việt thế hệ mới phát triển bởi Công ty TNHH eChip (echipco.com) & VuiCaHat.com
 Exec=%s gui
-Icon=input-keyboard
+Icon=%s
 Terminal=false
 Categories=Utility;Settings;
 Keywords=vietnamese;unikey;telex;vni;vuikey;vuicahat;echip;
-`, exe)
+`, exe, iconSVGPath)
 	_ = os.WriteFile(filepath.Join(appDir, "vuikey.desktop"), []byte(desktopContent), 0755)
 
-	// 3. Autostart entry (~/.config/autostart/vuikey.desktop)
+	// 4. Autostart entry (~/.config/autostart/vuikey.desktop)
 	autoDir := filepath.Join(home, ".config", "autostart")
 	_ = os.MkdirAll(autoDir, 0755)
 	autoContent := fmt.Sprintf(`[Desktop Entry]
 Type=Application
 Name=VuiKey Daemon
-Comment=VuiKey Zero-Preedit Vietnamese Input Method (eChip Co., Ltd. & VuiCaHat.com)
+Comment=VuiKey Vietnamese Input Method (eChip Co., Ltd. & VuiCaHat.com)
 Exec=%s daemon
-Icon=input-keyboard
+Icon=%s
 Terminal=false
 X-GNOME-Autostart-enabled=true
-`, exe)
+`, exe, iconSVGPath)
 	_ = os.WriteFile(filepath.Join(autoDir, "vuikey.desktop"), []byte(autoContent), 0755)
 
 	// 4. Disable im-config ibus/fcitx5 override for pure standalone VuiKey
