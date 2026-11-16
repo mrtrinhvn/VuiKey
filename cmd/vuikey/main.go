@@ -29,11 +29,75 @@ func stopPreviousVuiKeyInstances() {
 	}
 }
 
+func writeCleanFcitx5Config(home string) {
+	fcitxCfgDir := filepath.Join(home, ".config", "fcitx5")
+	_ = os.MkdirAll(fcitxCfgDir, 0755)
+
+	cfgContent := `[Hotkey]
+EnumerateWithTriggerKeys=True
+AltTriggerKeys=
+EnumerateForwardKeys=
+EnumerateBackwardKeys=
+EnumerateSkipFirst=False
+EnumerateGroupForwardKeys=
+EnumerateGroupBackwardKeys=
+
+[Hotkey/TriggerKeys]
+0=Control+space
+1=Super+space
+
+[Behavior]
+ActiveByDefault=True
+ShareInputState=All
+PreeditEnabledByDefault=True
+ShowInputMethodInformation=False
+showInputMethodInformationWhenFocusIn=False
+CompactInputMethodInformation=True
+ShowFirstInputMethodInformation=False
+DefaultPageSize=5
+OverrideXkbOption=False
+PreloadInputMethod=True
+
+[Behavior/DisabledAddons]
+0=notificationitem
+1=classicui
+2=kimpanel
+`
+	_ = os.WriteFile(filepath.Join(fcitxCfgDir, "config"), []byte(cfgContent), 0644)
+
+	profileContent := `[Groups/0]
+# Group Name
+Name=Default
+# Layout
+Default Layout=us
+# Default Input Method
+DefaultIM=vuikey
+
+[Groups/0/Items/0]
+# Name
+Name=keyboard-us
+# Layout
+Layout=
+
+[Groups/0/Items/1]
+# Name
+Name=vuikey
+# Layout
+Layout=
+
+[GroupOrder]
+0=Default
+`
+	_ = os.WriteFile(filepath.Join(fcitxCfgDir, "profile"), []byte(profileContent), 0644)
+}
+
 func ensureFcitx5VuiKeyRunning() {
 	stopPreviousVuiKeyInstances()
 	_ = exec.Command("ibus", "exit").Run()
 
 	home, _ := os.UserHomeDir()
+	writeCleanFcitx5Config(home)
+
 	addonDirs := filepath.Join(home, ".local", "lib", "fcitx5") + ":/usr/lib/x86_64-linux-gnu/fcitx5"
 	_ = os.Setenv("FCITX_ADDON_DIRS", addonDirs)
 
@@ -42,6 +106,8 @@ func ensureFcitx5VuiKeyRunning() {
 		cmd := exec.Command("fcitx5", "-r", "-d", "--disable=notificationitem,classicui,kimpanel")
 		cmd.Env = append(os.Environ(), "FCITX_ADDON_DIRS="+addonDirs)
 		_ = cmd.Start()
+	} else {
+		_ = exec.Command("fcitx5-remote", "-r").Run()
 	}
 	_ = exec.Command("fcitx5-remote", "-o").Run()
 	_ = exec.Command("fcitx5-remote", "-s", "vuikey").Run()
@@ -240,8 +306,9 @@ X-GNOME-Autostart-enabled=true
 `, exe, iconSVGPath)
 	_ = os.WriteFile(filepath.Join(autoDir, "vuikey.desktop"), []byte(autoContent), 0755)
 
-	// 4. Disable im-config ibus/fcitx5 override for pure standalone VuiKey
-	_ = exec.Command("im-config", "-n", "none").Run()
+	// 5. Configure im-config to use fcitx5 + write clean fcitx5 config
+	writeCleanFcitx5Config(home)
+	_ = exec.Command("im-config", "-n", "fcitx5").Run()
 
 	fmt.Println("✅ Đã cài đặt VuiKey thành bộ gõ mặc định khi khởi động máy!")
 	fmt.Printf("   • Lệnh CLI:       %s\n", symlinkPath)

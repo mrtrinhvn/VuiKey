@@ -6,24 +6,36 @@ package main
 import "C"
 
 import (
+	"os"
 	"sync"
+	"time"
 
 	"github.com/mrtrinhvn/VuiKey/internal/config"
 	"github.com/mrtrinhvn/VuiKey/internal/engine"
 )
 
 var (
-	mu      sync.Mutex
-	globalE = engine.NewEngine(config.Load())
+	mu          sync.Mutex
+	globalE     = engine.NewEngine(config.Load())
+	lastModTime time.Time
 )
+
+func syncConfigLocked() {
+	info, err := os.Stat(config.ConfigPath())
+	if err == nil && !info.ModTime().Equal(lastModTime) {
+		lastModTime = info.ModTime()
+		cfg := config.Load()
+		cfg.Enabled = true
+		globalE.Cfg = cfg
+	}
+}
 
 //export VuiCoreReloadConfig
 func VuiCoreReloadConfig() {
 	mu.Lock()
 	defer mu.Unlock()
-	cfg := config.Load()
-	cfg.Enabled = true
-	globalE.Cfg = cfg
+	lastModTime = time.Time{}
+	syncConfigLocked()
 	globalE.Reset()
 }
 
@@ -60,6 +72,7 @@ func VuiCoreHandleBackspace(outHandled *C.int) *C.char {
 func VuiCoreProcessKey(ch C.uint, outCommit **C.char, outPreedit **C.char) C.int {
 	mu.Lock()
 	defer mu.Unlock()
+	syncConfigLocked()
 	commitPrefix, curPreedit, handled := globalE.ProcessKeyForIME(rune(ch))
 	if !handled {
 		*outCommit = nil

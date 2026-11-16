@@ -329,6 +329,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
+	"time"
 	"unsafe"
 
 	"github.com/mrtrinhvn/VuiKey/internal/config"
@@ -467,6 +469,25 @@ func RunApp(d *x11hook.Daemon, showWindow bool) {
 		}
 		C.schedule_state_update(C.int(enInt), C.int(mode))
 	}
+
+	// Keep VuiKey tray icon [VN]/[EN] synchronized with Fcitx5 Ctrl+Space hotkey state
+	go func() {
+		for {
+			time.Sleep(500 * time.Millisecond)
+			out, err := exec.Command("fcitx5-remote").Output()
+			if err != nil {
+				continue
+			}
+			st := strings.TrimSpace(string(out))
+			if st == "2" && !d.Eng.Cfg.Enabled {
+				d.SetEnabled(true)
+				_ = config.Save(d.Eng.Cfg)
+			} else if st == "1" && d.Eng.Cfg.Enabled {
+				d.SetEnabled(false)
+				_ = config.Save(d.Eng.Cfg)
+			}
+		}
+	}()
 
 	d.OnStatsUpdated = func(tk, vt int64) {
 		msg := fmt.Sprintf("📊 Phiên hiện tại: %d phím đã gõ • %d dấu Tiếng Việt đã biến đổi mượt mà (Zero-Preedit)", tk, vt)
