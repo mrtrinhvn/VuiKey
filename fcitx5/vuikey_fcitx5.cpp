@@ -1,11 +1,13 @@
 #include <fcitx/addonfactory.h>
 #include <fcitx/addonmanager.h>
+#include <fcitx/event.h>
 #include <fcitx/inputcontext.h>
 #include <fcitx/inputmethodengine.h>
 #include <fcitx/inputpanel.h>
 #include <fcitx/instance.h>
 #include <fcitx-utils/utf8.h>
 #include <cstdlib>
+#include <memory>
 #include <string>
 #include "libvuikey_core.h"
 
@@ -15,6 +17,39 @@ class VuiKeyEngine : public InputMethodEngineV2 {
 public:
     VuiKeyEngine(Instance *instance) : instance_(instance) {
         VuiCoreReloadConfig();
+
+        // Intercept key events at PreInputMethod phase so VuiKey works across 100% of windows
+        // even if Fcitx5's per-window state was left on keyboard-us!
+        keyWatcher_ = instance_->watchEvent(
+            EventType::InputContextKeyEvent,
+            EventWatcherPhase::PreInputMethod,
+            [this](Event &event) {
+                auto &ke = static_cast<KeyEvent &>(event);
+                if (!ke.accepted()) {
+                    handleKeyEvent(ke);
+                }
+            });
+
+        focusOutWatcher_ = instance_->watchEvent(
+            EventType::InputContextFocusOut,
+            EventWatcherPhase::PreInputMethod,
+            [this](Event &event) {
+                auto &fe = static_cast<InputContextEvent &>(event);
+                commitAndClear(fe.inputContext());
+            });
+
+        resetWatcher_ = instance_->watchEvent(
+            EventType::InputContextReset,
+            EventWatcherPhase::PreInputMethod,
+            [this](Event &event) {
+                auto &re = static_cast<InputContextEvent &>(event);
+                auto *ic = re.inputContext();
+                char *rem = VuiCoreReset();
+                if (rem) free(rem);
+                ic->inputPanel().reset();
+                ic->updatePreedit();
+                ic->updateUserInterface(UserInterfaceComponent::InputPanel);
+            });
     }
 
     std::vector<InputMethodEntry> listInputMethods() override {
@@ -44,6 +79,13 @@ public:
     }
 
     void keyEvent(const InputMethodEntry &, KeyEvent &keyEvent) override {
+        if (!keyEvent.accepted()) {
+            handleKeyEvent(keyEvent);
+        }
+    }
+
+private:
+    void handleKeyEvent(KeyEvent &keyEvent) {
         if (keyEvent.isRelease()) {
             return;
         }
@@ -51,6 +93,15 @@ public:
         auto *ic = keyEvent.inputContext();
         Key key = keyEvent.key();
         Key raw = keyEvent.rawKey();
+
+        // Toggle [VN] / [EN] directly in ~/.config/vuikey/config.json on Ctrl+Space or Super+Space
+        if (key.check(Key(FcitxKey_space, KeyState::Ctrl)) ||
+            key.check(Key(FcitxKey_space, KeyState::Super))) {
+            commitAndClear(ic);
+            VuiCoreToggleEnabled();
+            keyEvent.filterAndAccept();
+            return;
+        }
 
         // If Ctrl, Alt, or Super is pressed, commit any active syllable first
         if (key.states().testAny(KeyStates{KeyState::Ctrl_Alt, KeyState::Super})) {
@@ -73,11 +124,7 @@ public:
             return;
         }
 
-        // 2. Handle Delete, Return, Tab, Escape, and Cursor Movement keys:
-        //    CRITICAL ANTI-DUPLICATE FIX:
-        //    When an editing/navigation key is pressed while a syllable is active,
-        //    we clear ClientPreedit FIRST, commit the syllable, and serialize the key via forwardKey()
-        //    while calling filterAndAccept() so X11 and DBus NEVER race!
+        // 2. Handle Delete, Return, Tab, Escape, and Cursor Movement keys
         if (sym == FcitxKey_Delete || sym == FcitxKey_KP_Delete ||
             sym == FcitxKey_Return || sym == FcitxKey_KP_Enter ||
             sym == FcitxKey_Tab || sym == FcitxKey_ISO_Left_Tab ||
@@ -114,14 +161,12 @@ public:
 
             if (handled) {
                 if (!commitStr.empty() && preeditStr.empty()) {
-                    // Word completed (e.g. Space or punctuation): clear preedit FIRST, then commit atomically!
                     ic->inputPanel().reset();
                     ic->updatePreedit();
                     ic->commitString(commitStr);
                     ic->updateUserInterface(UserInterfaceComponent::InputPanel);
                 } else {
                     if (!commitStr.empty()) {
-                        // Sliding Syllable Window boundary (e.g. nhac|di|dang): commit finished syllable immediately!
                         ic->commitString(commitStr);
                     }
                     updateClientPreedit(ic, preeditStr);
@@ -132,7 +177,6 @@ public:
         }
     }
 
-private:
     void commitAndClear(InputContext *ic) {
         char *rem = VuiCoreReset();
         std::string syl = rem ? rem : "";
@@ -148,7 +192,6 @@ private:
     void updateClientPreedit(InputContext *ic, const std::string &pre) {
         ic->inputPanel().reset();
         if (!pre.empty()) {
-            // Use TextFormatFlag::NoFlag (no underline!) for a clean UniKey-like feel
             Text preeditText(pre, TextFormatFlag::NoFlag);
             preeditText.setCursor(pre.size());
             if (ic->capabilityFlags().test(CapabilityFlag::Preedit)) {
@@ -162,6 +205,9 @@ private:
     }
 
     Instance *instance_;
+    std::unique_ptr<HandlerTableEntry<EventHandler>> keyWatcher_;
+    std::unique_ptr<HandlerTableEntry<EventHandler>> focusOutWatcher_;
+    std::unique_ptr<HandlerTableEntry<EventHandler>> resetWatcher_;
 };
 
 class VuiKeyFactory : public AddonFactory {

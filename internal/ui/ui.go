@@ -329,7 +329,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 	"unsafe"
 
@@ -470,21 +469,22 @@ func RunApp(d *x11hook.Daemon, showWindow bool) {
 		C.schedule_state_update(C.int(enInt), C.int(mode))
 	}
 
-	// Keep VuiKey tray icon [VN]/[EN] synchronized with Fcitx5 Ctrl+Space hotkey state
+	// Keep VuiKey tray icon [VN]/[EN] synchronized with ~/.config/vuikey/config.json (updated by Ctrl+Space)
 	go func() {
+		var lastMod time.Time
+		if info, err := os.Stat(config.ConfigPath()); err == nil {
+			lastMod = info.ModTime()
+		}
 		for {
-			time.Sleep(500 * time.Millisecond)
-			out, err := exec.Command("fcitx5-remote").Output()
-			if err != nil {
+			time.Sleep(250 * time.Millisecond)
+			info, err := os.Stat(config.ConfigPath())
+			if err != nil || info.ModTime().Equal(lastMod) {
 				continue
 			}
-			st := strings.TrimSpace(string(out))
-			if st == "2" && !d.Eng.Cfg.Enabled {
-				d.SetEnabled(true)
-				_ = config.Save(d.Eng.Cfg)
-			} else if st == "1" && d.Eng.Cfg.Enabled {
-				d.SetEnabled(false)
-				_ = config.Save(d.Eng.Cfg)
+			lastMod = info.ModTime()
+			latest := config.Load()
+			if latest.Enabled != d.Eng.Cfg.Enabled {
+				d.SetEnabled(latest.Enabled)
 			}
 		}
 	}()

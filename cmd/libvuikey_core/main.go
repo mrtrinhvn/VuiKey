@@ -25,9 +25,25 @@ func syncConfigLocked() {
 	if err == nil && !info.ModTime().Equal(lastModTime) {
 		lastModTime = info.ModTime()
 		cfg := config.Load()
-		cfg.Enabled = true
 		globalE.Cfg = cfg
 	}
+}
+
+//export VuiCoreToggleEnabled
+func VuiCoreToggleEnabled() C.int {
+	mu.Lock()
+	defer mu.Unlock()
+	syncConfigLocked()
+	globalE.Cfg.Enabled = !globalE.Cfg.Enabled
+	globalE.Reset()
+	_ = config.Save(globalE.Cfg)
+	if info, err := os.Stat(config.ConfigPath()); err == nil {
+		lastModTime = info.ModTime()
+	}
+	if globalE.Cfg.Enabled {
+		return 1
+	}
+	return 0
 }
 
 //export VuiCoreReloadConfig

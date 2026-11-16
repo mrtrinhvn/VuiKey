@@ -34,17 +34,16 @@ func writeCleanFcitx5Config(home string) {
 	_ = os.MkdirAll(fcitxCfgDir, 0755)
 
 	cfgContent := `[Hotkey]
-EnumerateWithTriggerKeys=True
+EnumerateWithTriggerKeys=False
+TriggerKeys=
 AltTriggerKeys=
 EnumerateForwardKeys=
 EnumerateBackwardKeys=
 EnumerateSkipFirst=False
 EnumerateGroupForwardKeys=
 EnumerateGroupBackwardKeys=
-
-[Hotkey/TriggerKeys]
-0=Control+space
-1=Super+space
+ActivateKeys=
+DeactivateKeys=
 
 [Behavior]
 ActiveByDefault=True

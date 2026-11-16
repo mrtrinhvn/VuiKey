@@ -129,8 +129,8 @@ func isEnglishOnlyPrefix(syl []rune, nextCh rune) bool {
 			"pl": true, "pr": true, "sc": true, "sk": true, "sl": true,
 			"sm": true, "sn": true, "sp": true, "sr": true, "st": true,
 			"sw": true, "tw": true, "wr": true, "sh": true, "wh": true,
-			"ck": true, "ab": true, "ad": true, "af": true, "ag": true,
-			"ak": true, "al": true, "ar": true, "as": true, "av": true,
+			"ck": true, "ab": true, "ad": true, "ag": true,
+			"ak": true, "al": true, "ar": true, "av": true,
 		}
 		if invalidStarts[s] {
 			return true
@@ -183,6 +183,8 @@ var commonEnglishTechWords = map[string]bool{
 	"item": true, "items": true, "icon": true, "icons": true, "edit": true, "init": true,
 	"unit": true, "exit": true, "admin": true, "login": true, "token": true, "panel": true,
 	"level": true, "hotel": true, "pixel": true, "local": true, "total": true, "final": true,
+	"arrow": true, "arrows": true, "array": true, "arrays": true, "error": true, "errors": true,
+	"allow": true, "asset": true, "assets": true, "async": true, "audio": true, "about": true,
 }
 
 // checkAutoRestoreEnglish checks if adding `nextCh` makes `rawHistory` an unmistakable English word
