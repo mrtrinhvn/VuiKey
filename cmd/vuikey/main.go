@@ -37,9 +37,9 @@ func ensureFcitx5VuiKeyRunning() {
 	addonDirs := filepath.Join(home, ".local", "lib", "fcitx5") + ":/usr/lib/x86_64-linux-gnu/fcitx5"
 	_ = os.Setenv("FCITX_ADDON_DIRS", addonDirs)
 
-	// If fcitx5 is not running yet, start it with FCITX_ADDON_DIRS
+	// If fcitx5 is not running yet, start it with FCITX_ADDON_DIRS and disable its duplicate tray icon addons
 	if err := exec.Command("pgrep", "-x", "fcitx5").Run(); err != nil {
-		cmd := exec.Command("fcitx5", "-r", "-d")
+		cmd := exec.Command("fcitx5", "-r", "-d", "--disable=notificationitem,classicui,kimpanel")
 		cmd.Env = append(os.Environ(), "FCITX_ADDON_DIRS="+addonDirs)
 		_ = cmd.Start()
 	}
