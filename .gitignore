@@ -1,0 +1,6 @@
+# Build & Release staging
+/build/
+/dist/
+*.o
+*.log
+.DS_Store
