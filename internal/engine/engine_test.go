@@ -81,7 +81,14 @@ func TestComprehensiveVietnameseTypingOrders(t *testing.T) {
 		{"pl\bhuwcs", "phức"},
 		{"phuwcf\bcs", "phức"},
 
-		// All 5 ways of typing "được", "trường", "người", "nước", "mượn", "thương"
+		// All 5 ways of typing "được", "trường", "người", "nước", "mượn", "thương", and free-style delayed 'd' ("dodongj" -> "động")
+		{"dodongj", "động"},
+		{"doongdj", "động"},
+		{"doongjd", "động"},
+		{"dongodj", "động"},
+		{"dongojd", "động"},
+		{"duocwjd", "được"},
+		{"duowcjd", "được"},
 		{"dduowcj", "được"},
 		{"dduocwj", "được"},
 		{"dduwowcj", "được"},

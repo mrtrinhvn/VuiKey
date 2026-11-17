@@ -229,10 +229,19 @@ func checkAutoRestoreEnglish(currentSyl []rune, rawHistory []rune) bool {
 func isModifierForSyllable(dec decomposedSyllable, ch rune, mode InputMode) bool {
 	lc := unicode.ToLower(ch)
 
-	// 'd' is only a modifier if the syllable is literally "d" or "đ" with no vowels yet
+	// 'd' is a modifier in Telex if the syllable starts with 'd'/'D' (allowing free-style delayed 'd' like "dodongj", "doongdj", "doongjd" -> "động"),
+	// or if the syllable is literally "đ"/"Đ" (for immediate double-'d' undo "dd" -> "d").
 	if lc == 'd' && (mode == ModeTelex || mode == ModeTelexVNI) {
-		return len(dec.vowels) == 0 && len(dec.initial) == 1 &&
-			(unicode.ToLower(dec.initial[0]) == 'd' || unicode.ToLower(dec.initial[0]) == 'đ')
+		if len(dec.initial) == 1 {
+			first := unicode.ToLower(dec.initial[0])
+			if first == 'd' {
+				return true
+			}
+			if first == 'đ' && len(dec.vowels) == 0 {
+				return true
+			}
+		}
+		return false
 	}
 
 	if len(dec.vowels) == 0 {
@@ -439,26 +448,37 @@ func (e *Engine) tryTransform(oldSyl []rune, ch rune) ([]rune, bool, bool) {
 	useTelex := e.Cfg.Mode == ModeTelex || e.Cfg.Mode == ModeTelexVNI
 	useVNI := e.Cfg.Mode == ModeVNI || e.Cfg.Mode == ModeTelexVNI
 
-	// 1. Handle 'd' + 'd' -> 'đ' (Telex) or '9' -> 'đ' (VNI)
-	if (useTelex && lc == 'd' && len(dec.vowels) == 0 && len(dec.initial) == 1) ||
+	// 1. Handle 'd' -> 'đ' anywhere in the syllable (Telex free-style: "dd...", "dodongj", "doongdj", "doongjd" -> "động") or '9' -> 'đ' (VNI)
+	if (useTelex && lc == 'd' && len(dec.initial) == 1) ||
 		(useVNI && lc == '9' && len(dec.initial) >= 1) {
 		first := syl[0]
+		prevWasD := len(e.rawHistory) >= 2 && (unicode.ToLower(e.rawHistory[len(e.rawHistory)-2]) == 'd' || e.rawHistory[len(e.rawHistory)-2] == '9')
 		switch first {
 		case 'd':
 			syl[0] = 'đ'
+			e.delayedD = len(dec.vowels) > 0
 			return syl, true, false
 		case 'D':
 			syl[0] = 'Đ'
+			e.delayedD = len(dec.vowels) > 0
 			return syl, true, false
 		case 'đ':
-			// Double-key undo: đ + d -> dd
-			syl[0] = 'd'
-			syl = append(syl, ch)
-			return syl, true, true
+			if len(dec.vowels) == 0 || prevWasD {
+				// Double-key undo: đ + d -> dd (or dod + d -> dod)
+				syl[0] = 'd'
+				if len(dec.vowels) == 0 {
+					syl = append(syl, ch)
+				}
+				return syl, true, true
+			}
 		case 'Đ':
-			syl[0] = 'D'
-			syl = append(syl, ch)
-			return syl, true, true
+			if len(dec.vowels) == 0 || prevWasD {
+				syl[0] = 'D'
+				if len(dec.vowels) == 0 {
+					syl = append(syl, ch)
+				}
+				return syl, true, true
+			}
 		}
 	}
 

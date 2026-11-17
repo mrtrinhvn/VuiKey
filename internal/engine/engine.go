@@ -164,6 +164,7 @@ type Engine struct {
 	rawHistory  []rune // Raw keys typed for the current word
 	wordSealed  bool   // True if the user undid a double-key or word is non-Vietnamese English
 	lastUndoKey rune   // Key that just triggered an undo
+	delayedD    bool   // True if the immediately preceding keystroke applied a delayed 'd' -> 'đ'
 }
 
 func NewEngine(cfg Config) *Engine {
@@ -181,6 +182,7 @@ func (e *Engine) Reset() {
 	e.rawHistory = e.rawHistory[:0]
 	e.wordSealed = false
 	e.lastUndoKey = 0
+	e.delayedD = false
 }
 
 // CurrentSyllable returns the currently tracked syllable on screen.
@@ -196,6 +198,7 @@ func (e *Engine) HandleBackspace() {
 	// Always unseal the word on BackSpace so the user never has to delete all the way to the first letter!
 	e.wordSealed = false
 	e.lastUndoKey = 0
+	e.delayedD = false
 	e.rawHistory = append([]rune(nil), e.syllable...)
 }
 
@@ -286,6 +289,37 @@ func (e *Engine) ProcessKey(ch rune) Action {
 		e.syllable = append(e.syllable, ch)
 		return Action{Swallow: false}
 	}
+
+	// Sliding Syllable Window: if the previous keystroke was a delayed 'd' (e.g. "di" + 'd' -> "đi" or "dịu" + 'd' -> "địu")
+	// and the user now types a non-modifier vowel (like 'a' in "didang" or "dịudàng"), that 'd' actually started a new syllable "da..."!
+	if e.Cfg.SyllableSplit && e.delayedD && isVietnameseVowel(ch) {
+		dec := decompose(e.syllable)
+		isUO := len(dec.vowels) == 1 && lowerASCIIString(dec.vowels) == "u" && unicode.ToLower(ch) == 'o'
+		if !isModifierForSyllable(dec, ch, e.Cfg.Mode) && !isUO {
+			oldScreen := append([]rune(nil), e.syllable...)
+			if e.syllable[0] == 'đ' {
+				e.syllable[0] = 'd'
+			} else if e.syllable[0] == 'Đ' {
+				e.syllable[0] = 'D'
+			}
+			prevD := 'd'
+			if len(e.rawHistory) >= 2 && unicode.IsUpper(e.rawHistory[len(e.rawHistory)-2]) {
+				prevD = 'D'
+			}
+			targetScreen := append(append([]rune(nil), e.syllable...), prevD, ch)
+			e.syllable = []rune{prevD, ch}
+			e.rawHistory = []rune{prevD, ch}
+			e.delayedD = false
+			e.lastUndoKey = 0
+			bs, ins := ComputeMinimalDiff(oldScreen, targetScreen)
+			return Action{
+				Swallow:    true,
+				Backspaces: bs,
+				CommitText: ins,
+			}
+		}
+	}
+	e.delayedD = false
 
 	// Sliding Syllable Window: check if `ch` starts a brand new syllable in a concatenated string
 	// (e.g., `nhac` + `d` -> `nhac` | `d`, `di` + `d` -> `di` | `d`, `dang` + `n` -> `dang` | `n`).
@@ -391,6 +425,31 @@ func (e *Engine) ProcessKeyForIME(ch rune) (commitPrefix string, currentPreedit 
 		e.syllable = append(e.syllable, ch)
 		return "", string(e.syllable), true
 	}
+
+	// Sliding Syllable Window: if the previous keystroke was a delayed 'd' (e.g. "di" + 'd' -> "đi" or "dịu" + 'd' -> "địu")
+	// and the user now types a non-modifier vowel (like 'a' in "didang" or "dịudàng"), that 'd' actually started a new syllable "da..."!
+	if e.Cfg.SyllableSplit && e.delayedD && isVietnameseVowel(ch) {
+		dec := decompose(e.syllable)
+		isUO := len(dec.vowels) == 1 && lowerASCIIString(dec.vowels) == "u" && unicode.ToLower(ch) == 'o'
+		if !isModifierForSyllable(dec, ch, e.Cfg.Mode) && !isUO {
+			if e.syllable[0] == 'đ' {
+				e.syllable[0] = 'd'
+			} else if e.syllable[0] == 'Đ' {
+				e.syllable[0] = 'D'
+			}
+			prevD := 'd'
+			if len(e.rawHistory) >= 2 && unicode.IsUpper(e.rawHistory[len(e.rawHistory)-2]) {
+				prevD = 'D'
+			}
+			finished := string(e.syllable)
+			e.syllable = []rune{prevD, ch}
+			e.rawHistory = []rune{prevD, ch}
+			e.delayedD = false
+			e.lastUndoKey = 0
+			return finished, string(e.syllable), true
+		}
+	}
+	e.delayedD = false
 
 	// Sliding Syllable Window: if `ch` starts a new syllable in an unspaced compound string
 	// (e.g. nhacdidangnhactieng...), immediately commit the finished syllable and start a fresh 1-char syllable!
