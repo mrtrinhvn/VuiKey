@@ -9,31 +9,31 @@
   <rect width="1200" height="420" rx="20" fill="url(#bg)" stroke="#334155" stroke-width="2"/>
   
   <!-- Header Badge -->
-  <rect x="50" y="36" width="420" height="34" rx="17" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
-  <text x="70" y="58" fill="#38bdf8" font-family="Inter, Ubuntu, sans-serif" font-size="14" font-weight="bold">⚡ ZERO-PREEDIT VIETNAMESE ENGINE FOR LINUX</text>
+  <rect x="50" y="36" width="520" height="34" rx="17" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="70" y="58" fill="#38bdf8" font-family="Inter, Ubuntu, sans-serif" font-size="14" font-weight="bold">⚡ NEXT-GEN VIETNAMESE INPUT ENGINE • LINUX &amp; WINDOWS</text>
 
   <!-- Main Title -->
   <text x="50" y="120" fill="#f8fafc" font-family="Inter, Ubuntu, sans-serif" font-size="52" font-weight="900">VuiKey Studio 🇻🇳</text>
-  <text x="50" y="162" fill="#94a3b8" font-family="Inter, Ubuntu, sans-serif" font-size="21">Bộ Gõ Tiếng Việt Độc Lập "Không Gạch Chân" — Tạm Biệt Vĩnh Viễn Lỗi Nhân Đôi Chữ</text>
+  <text x="50" y="162" fill="#94a3b8" font-family="Inter, Ubuntu, sans-serif" font-size="21">Bộ Gõ Tiếng Việt Thế Hệ Mới — Độ Trễ 0.00ms • Gõ Tự Do • Tự Bảo Vệ Từ Tiếng Anh</text>
 
   <!-- Feature Boxes -->
   <rect x="50" y="195" width="350" height="135" rx="14" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
-  <text x="72" y="230" fill="#10b981" font-family="Inter, Ubuntu, sans-serif" font-size="18" font-weight="bold">1. Zero Pre-edit (Như UniKey Win)</text>
-  <text x="72" y="260" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">• Không giữ chuỗi tạm gạch chân</text>
+  <text x="72" y="230" fill="#10b981" font-family="Inter, Ubuntu, sans-serif" font-size="18" font-weight="bold">1. Chống Nhân Đôi &amp; Mất Chữ</text>
+  <text x="72" y="260" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">• Không giữ bộ đệm gạch chân dài</text>
   <text x="72" y="284" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">• Ấn Delete / Backspace không bao giờ</text>
-  <text x="72" y="306" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">  nhảy đúp chữ trên Chrome, IDE, Web</text>
+  <text x="72" y="306" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">  nhảy đúp chữ trên trình duyệt &amp; IDE</text>
 
   <rect x="425" y="195" width="350" height="135" rx="14" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
-  <text x="447" y="230" fill="#38bdf8" font-family="Inter, Ubuntu, sans-serif" font-size="18" font-weight="bold">2. Sliding Syllable Window</text>
-  <text x="447" y="260" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">• Tự tách nhac|di|dang|nhac|tieng...</text>
-  <text x="447" y="284" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">• Gõ chuỗi dài không dấu cách vẫn bỏ</text>
-  <text x="447" y="306" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">  dấu chuẩn xác cho âm tiết cuối</text>
+  <text x="447" y="230" fill="#38bdf8" font-family="Inter, Ubuntu, sans-serif" font-size="18" font-weight="bold">2. Gõ Tự Do &amp; Tách Âm Tiết</text>
+  <text x="447" y="260" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">• Gõ tự do: dodongj ➔ động, 5 kiểu ươ</text>
+  <text x="447" y="284" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">• Tự tách chuỗi dính liền không cách</text>
+  <text x="447" y="306" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">• Sửa chữ bằng Backspace ăn dấu ngay</text>
 
   <rect x="800" y="195" width="350" height="135" rx="14" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
-  <text x="822" y="230" fill="#fde047" font-family="Inter, Ubuntu, sans-serif" font-size="18" font-weight="bold">3. Smart English &amp; 9-Slot XTest</text>
-  <text x="822" y="260" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">• Tự bảo vệ từ tiếng Anh: window, view...</text>
-  <text x="822" y="284" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">• 9-Slot Keycode Ring Buffer chống</text>
-  <text x="822" y="306" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">  tranh chấp phím 100% ở tốc độ cao</text>
+  <text x="822" y="230" fill="#fde047" font-family="Inter, Ubuntu, sans-serif" font-size="18" font-weight="bold">3. Smart English Guard</text>
+  <text x="822" y="260" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">• Tự giữ nguyên từ Tiếng Anh: window,</text>
+  <text x="822" y="284" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">  view, test, server, linux, docker...</text>
+  <text x="822" y="306" fill="#cbd5e1" font-family="Inter, Ubuntu, sans-serif" font-size="14">• Không cần tắt Tiếng Việt khi gõ xen kẽ</text>
 
   <!-- Ecosystem Footer -->
   <rect x="50" y="352" width="1100" height="44" rx="10" fill="#172554" stroke="#3b82f6" stroke-width="1"/>
