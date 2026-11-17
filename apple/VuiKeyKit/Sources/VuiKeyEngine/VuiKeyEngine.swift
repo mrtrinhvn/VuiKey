@@ -707,7 +707,7 @@ public final class VuiKeyEngine {
             case "r": wantedTone = .hoi
             case "x": wantedTone = .nga
             case "j": wantedTone = .nang
-            case "z": wantedTone = .none
+            case "z": wantedTone = Tone.none
             default: break
             }
         }
@@ -718,7 +718,7 @@ public final class VuiKeyEngine {
             case "3": wantedTone = .hoi
             case "4": wantedTone = .nga
             case "5": wantedTone = .nang
-            case "0": wantedTone = .none
+            case "0": wantedTone = Tone.none
             default: break
             }
         }

@@ -9,6 +9,7 @@ package main
 #include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
+#include <objc/runtime.h>
 #include <stdlib.h>
 
 extern int goHandleMacKey(int keyCode, unsigned int flags, unsigned int uniChar);
@@ -139,18 +140,22 @@ static CGEventRef vuiKeyEventTapCallback(CGEventTapProxy proxy, CGEventType type
 	return event;
 }
 
-@interface VuiKeyMenuDelegate : NSObject
-- (void)onMenuClick:(id)sender;
-@end
-
-@implementation VuiKeyMenuDelegate
-- (void)onMenuClick:(id)sender {
+static void vuiKeyMenuClickIMP(id self, SEL _cmd, id sender) {
 	NSMenuItem *item = (NSMenuItem *)sender;
 	goMenuAction((int)[item tag]);
 }
-@end
 
-static VuiKeyMenuDelegate *menuDelegate = nil;
+static id menuDelegate = nil;
+
+static id createMenuDelegate(void) {
+	Class cls = objc_getClass("VuiKeyMenuDelegate");
+	if (cls == nil) {
+		cls = objc_allocateClassPair([NSObject class], "VuiKeyMenuDelegate", 0);
+		class_addMethod(cls, @selector(onMenuClick:), (IMP)vuiKeyMenuClickIMP, "v@:@");
+		objc_registerClassPair(cls);
+	}
+	return [[cls alloc] init];
+}
 
 static void macUpdateMenuState(int enabled, int mode, int smartEng, int sylSplit, int modernTone) {
 	dispatch_async(dispatch_get_main_queue(), ^{
@@ -177,7 +182,7 @@ static void macRunApp(int enabled, int mode, int smartEng, int sylSplit, int mod
 		[NSApplication sharedApplication];
 		[NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
 
-		menuDelegate = [[VuiKeyMenuDelegate alloc] init];
+		menuDelegate = createMenuDelegate();
 		statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
 		statusItem.button.title = enabled ? @"🇻🇳 V" : @"🇬🇧 E";
 
