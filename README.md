@@ -1,9 +1,10 @@
 # VuiKey Studio 🇻🇳⚡⌨️
 
 [![Language: VI | EN](https://img.shields.io/badge/🌐_Language-Tiếng_Việt_%7C_English-38bdf8?style=flat-square)](#-tài-liệu-tiếng-việt-vietnamese-documentation)
-[![Download .deb](https://img.shields.io/badge/📦_Download-.deb_(Ubuntu_%7C_Mint_%7C_Pop!__OS)-10b981?style=flat-square)](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/vuikey_1.0.0_amd64.deb)
+[![Download .deb](https://img.shields.io/badge/📦_Linux_.deb-(Ubuntu_%7C_Mint_%7C_Pop!__OS)-10b981?style=flat-square)](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/vuikey_1.0.0_amd64.deb)
+[![Download Windows](https://img.shields.io/badge/🪟_Windows_10/11-VuiKey.exe_(Portable_.zip)-0ea5e9?style=flat-square)](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/VuiKey-1.0.0-windows-amd64.zip)
 [![AI Agent Native](https://img.shields.io/badge/🤖_AI_Agent_Native-Antigravity_%7C_Claude_Code_%7C_Codex-8b5cf6?style=flat-square)](AGENTS.md)
-[![Linux Desktop](https://img.shields.io/badge/🐧_Linux-X11_%26_Wayland_%7C_Ubuntu_%7C_Fedora_%7C_Arch-f97316?style=flat-square)](#-bảng-tương-thích-hệ-điều-hành-linux)
+[![Linux & Windows](https://img.shields.io/badge/💻_OS-Linux_(X11_%26_Wayland)_%7C_Windows_10/11_x64-f97316?style=flat-square)](#-bảng-tương-thích-hệ-điều-hành-linux)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
 <p align="center">
@@ -28,9 +29,13 @@
 
 ---
 
-## 🚀 Cài Đặt Nhanh (3 Cách Tiện Lợi)
+## 🚀 Cài Đặt Nhanh (Linux & Windows)
 
-### Cách 1: Cài từ gói `.deb` dựng sẵn (Ubuntu, Pop!_OS, Linux Mint, Debian, Zorin, Kali)
+### 🪟 Cho Windows 10 / Windows 11 (64-bit Portable — Chạy ngay như UniKey, không cần cài đặt)
+- **Tải trực tiếp:** [**`VuiKey-1.0.0-windows-amd64.zip`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/VuiKey-1.0.0-windows-amd64.zip)
+- Giải nén và nhấp đúp vào **`VuiKey.exe`** (chỉ `1.9 MB`, không phụ thuộc thư viện ngoài, tích hợp sẵn khay hệ thống **`[VN]` / `[EN]`**, phím tắt `Ctrl+Space` và tùy chọn *Khởi động cùng Windows*).
+
+### 🐧 Cách 1 (Linux): Cài từ gói `.deb` dựng sẵn (Ubuntu, Pop!_OS, Linux Mint, Debian, Zorin, Kali)
 ```bash
 wget -O /tmp/vuikey_1.0.0_amd64.deb https://github.com/mrtrinhvn/VuiKey/releases/latest/download/vuikey_1.0.0_amd64.deb
 sudo apt install -y /tmp/vuikey_1.0.0_amd64.deb
@@ -75,6 +80,7 @@ curl -fsSL https://raw.githubusercontent.com/mrtrinhvn/VuiKey/main/scripts/insta
 | **2. Họ Red Hat / Fedora** | • **Fedora Workstation** *(38, 39, 40, 41)*<br>• **RHEL / Rocky Linux / AlmaLinux / CentOS Stream** | ✅ **X11 (Xorg)**<br>✅ **Wayland** | `scripts/install-linux.sh` hoặc [**`vuikey-1.0.0-linux-x86_64.tar.gz`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/vuikey-1.0.0-linux-x86_64.tar.gz) |
 | **3. Họ Arch Linux** | • **Arch Linux**<br>• **Manjaro**, **EndeavourOS**, **Garuda Linux** | ✅ **X11 & Wayland** *(KDE, GNOME, Hyprland, Sway, i3)* | `scripts/install-linux.sh` hoặc [**`vuikey-1.0.0-linux-x86_64.tar.gz`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/vuikey-1.0.0-linux-x86_64.tar.gz) |
 | **4. Họ SUSE** | • **openSUSE Leap & Tumbleweed** | ✅ **X11 & Wayland** | `scripts/install-linux.sh` |
+| **5. Windows 10 / 11** | • **Windows 10 & Windows 11 (64-bit)** | ✅ **Win32 Native (`WH_KEYBOARD_LL` + `KEYEVENTF_UNICODE`)** | [**`VuiKey-1.0.0-windows-amd64.zip`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/VuiKey-1.0.0-windows-amd64.zip) (`VuiKey.exe` Portable) |
 
 ---
 

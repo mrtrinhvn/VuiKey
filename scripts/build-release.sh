@@ -65,6 +65,50 @@ cp ~/.local/share/fcitx5/addon/vuikey.conf "$TAR_STAGE/addon-vuikey.conf"
 cp ~/.local/share/fcitx5/inputmethod/vuikey.conf "$TAR_STAGE/im-vuikey.conf"
 cp README.md LICENSE NOTICE "$TAR_STAGE/"
 tar -czf "$SCRIPT_DIR/dist/vuikey-${VERSION}-linux-x86_64.tar.gz" -C "$SCRIPT_DIR/dist" "vuikey-linux-x86_64"
-rm -rf "$PKG_DIR" "$TAR_STAGE"
+
+# Also build standalone Windows x64 Portable bundle (VuiKey.exe)
+WIN_STAGE="$SCRIPT_DIR/dist/VuiKey-Windows-x64"
+rm -rf "$WIN_STAGE"
+mkdir -p "$WIN_STAGE"
+GO_BIN="/home/tao/.local/go/bin/go"
+if ! [ -x "$GO_BIN" ]; then GO_BIN="go"; fi
+GOOS=windows GOARCH=amd64 "$GO_BIN" build -ldflags="-H=windowsgui -s -w" -o "$WIN_STAGE/VuiKey.exe" ./cmd/vuikey_windows
+cp README.md LICENSE NOTICE "$WIN_STAGE/"
+cat << 'WEOF' > "$WIN_STAGE/HUONG-DAN-SU-DUNG-WINDOWS.txt"
+======================================================================
+   VUIKEY STUDIO v1.0.0 — BỘ GÕ TIẾNG VIỆT THẾ HỆ MỚI CHO WINDOWS
+   Phát triển bởi Công ty TNHH eChip (echipco.com) & VuiCaHat.com
+======================================================================
+
+1. CHẠY NGAY KHÔNG CẦN CÀI ĐẶT (PORTABLE):
+   - Nhấp đúp vào file "VuiKey.exe" để mở bảng điều khiển VuiKey Studio
+     và biểu tượng [VN] màu xanh ngọc dưới khay hệ thống (System Tray).
+
+2. PHÍM TẮT & THAO TÁC NHANH:
+   - Nhấn Ctrl + Space (hoặc Alt + Z), hoặc click chuột trái vào biểu
+     tượng [VN] ở góc phải dưới màn hình để chuyển đổi Tiếng Việt [VN]
+     <-> Tiếng Anh [EN].
+   - Nhấp chuột phải vào biểu tượng [VN] để mở nhanh menu chọn Telex,
+     VNI, hoặc bật "Khởi động cùng Windows".
+
+3. TÍNH NĂNG VƯỢT TRỘI:
+   - Gõ tự do (Free-style Telex): Hỗ trợ đầy đủ cả 5 cách gõ "ươ"
+     (dduowcj, dduocwj, dduwowcj, dduwocwj, dduwocj -> được) và gõ chữ
+     "đ" ở bất kỳ vị trí nào trong âm tiết (dodongj, doongdj, doongjd -> động).
+   - Sliding Syllable Window: Tự động tách âm tiết thông minh ngay cả
+     khi gõ liền không dấu cách, chống lỗi nhân đôi chữ khi nhấn Delete.
+   - Smart English Guard: Tự động nhận diện và giữ nguyên các từ Tiếng
+     Anh thông dụng (window, view, function, test, server, linux, docker...)
+     mà không cần tắt bộ gõ Tiếng Việt.
+
+Website chính thức: https://echipco.com/vuikey/
+                    https://vuicahat.com
+======================================================================
+WEOF
+python3 -c "
+import shutil
+shutil.make_archive('$SCRIPT_DIR/dist/VuiKey-${VERSION}-windows-amd64', 'zip', '$SCRIPT_DIR/dist', 'VuiKey-Windows-x64')
+"
+rm -rf "$PKG_DIR" "$TAR_STAGE" "$WIN_STAGE"
 
 ls -lh "$SCRIPT_DIR/dist/"
