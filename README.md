@@ -1,14 +1,14 @@
 # VuiKey Studio 🇻🇳⚡⌨️
 
-[![Language: VI | EN](https://img.shields.io/badge/🌐_Language-Tiếng_Việt_%7C_English-38bdf8?style=flat-square)](#-tài-liệu-tiếng-việt-vietnamese-documentation)
+[![Language: VI | EN](https://img.shields.io/badge/🌐_Language-Tiếng_Việt_%7C_English-38bdf8?style=flat-square)](#-giới-thiệu-vuikey)
 [![Download .deb](https://img.shields.io/badge/📦_Linux_.deb-(Ubuntu_%7C_Mint_%7C_Pop!__OS)-10b981?style=flat-square)](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/vuikey_1.0.0_amd64.deb)
 [![Download Windows](https://img.shields.io/badge/🪟_Windows_10/11-VuiKey.exe_(Portable_.zip)-0ea5e9?style=flat-square)](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/VuiKey-1.0.0-windows-amd64.zip)
 [![AI Agent Native](https://img.shields.io/badge/🤖_AI_Agent_Native-Antigravity_%7C_Claude_Code_%7C_Codex-8b5cf6?style=flat-square)](AGENTS.md)
-[![Linux & Windows](https://img.shields.io/badge/💻_OS-Linux_(X11_%26_Wayland)_%7C_Windows_10/11_x64-f97316?style=flat-square)](#-bảng-tương-thích-hệ-điều-hành-linux--windows)
+[![Linux, Windows, macOS & iOS](https://img.shields.io/badge/💻_OS-Linux_%7C_Windows_%7C_macOS_%7C_iOS-f97316?style=flat-square)](#-bảng-tương-thích-hệ-điều-hành-linux--windows)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
 <p align="center">
-  <b><a href="#-tài-liệu-tiếng-việt-vietnamese-documentation">🇻🇳 Đọc bản Tiếng Việt</a></b> &nbsp;•&nbsp;
+  <b><a href="#-giới-thiệu-vuikey">🇻🇳 Đọc bản Tiếng Việt</a></b> &nbsp;•&nbsp;
   <b><a href="#-english-documentation">🇺🇸 Read in English</a></b> &nbsp;•&nbsp;
   <b><a href="https://echipco.com/vuikey">🌐 Trang chủ VuiKey (echipco.com/vuikey)</a></b> &nbsp;•&nbsp;
   <b><a href="https://echipco.com">🏢 Công ty TNHH eChip (echipco.com)</a></b> &nbsp;•&nbsp;
@@ -21,11 +21,23 @@
 
 ---
 
-# 🇻🇳 Tài Liệu Tiếng Việt (Vietnamese Documentation)
+# 🇻🇳 Giới Thiệu VuiKey
 
-**VuiKey** là bộ gõ Tiếng Việt thế hệ mới dành cho cả **Linux Desktop** (`Ubuntu`, `Pop!_OS`, `Linux Mint`, `Debian`, `Fedora`, `Arch`, `Manjaro`, `openSUSE` — hỗ trợ cả **X11** và **Wayland**) và **Windows 10 / 11 (64-bit Portable)**, được nghiên cứu và phát triển bởi đội ngũ kỹ thuật [**Công ty TNHH eChip (`echipco.com`)**](https://echipco.com) cùng nền tảng âm nhạc trực tuyến [**VuiCaHat (`vuicahat.com`)**](https://vuicahat.com).
+> **Bộ gõ tiếng Việt ngày nay không phải là thứ gì đao to búa lớn — nhưng nó lập tức tạo ra khác biệt khi giải quyết dứt điểm những phiền toái đã tồn tại suốt nhiều năm mà chưa bộ gõ nào xử lý trọn vẹn.**
 
-> ⭐ **Nếu bạn từng gặp cảnh đang gõ văn bản mà bị nhảy đúp cả cụm chữ khi bấm `Delete`/`Backspace`, gõ xen kẽ tiếng Anh bị biến thành chữ lỗi (`window` ➔ `ưindoư`, `test` ➔ `tét`), hoặc bấm xóa lùi 1 ký tự để sửa mà không thể bỏ dấu tiếp được (phải xóa sạch cả từ gõ lại từ đầu) — thì VuiKey được sinh ra chính là dành cho bạn. Hãy tặng dự án 1 ngôi sao (Star) ở góc trên bên phải GitHub để ủng hộ nhóm phát triển nhé!**
+### ❌ Những "nỗi đau" kinh điển khi dùng các bộ gõ khác:
+- **Gõ tiếng Anh xen kẽ bị biến dạng chữ:** Đang bật Tiếng Việt mà gõ `window`, `view`, `test`, `user`, `server`, `linux`... là lập tức biến thành `ưindoư`, `vieư`, `tét`, `úer`, `lĩnu` — buộc phải xóa đi và bấm đổi ngôn ngữ liên tục.
+- **Sửa 1 ký tự phải xóa lại cả từ:** Lỡ gõ nhầm 1 phím rồi bấm `Backspace` xóa đi, nhưng gõ lại dấu sắc/huyền/mũ/móc thì bộ gõ "đơ" không nhận nữa, bắt phải xóa lùi về tận chữ cái đầu tiên.
+- **Nhân đôi chữ hoặc nuốt chữ đầu:** Gõ nhanh trên thanh địa chỉ trình duyệt (Chrome, Safari, Spotlight) hoặc gõ chuỗi dài không dấu cách rồi bấm `Delete`/`Backspace` bị nhảy đúp cả cụm chữ hoặc mất chữ cái đầu.
+- **Gõ nhanh bị rớt dấu:** Bắt phải gõ `dd` ngay đầu từ hoặc ép đúng 1 thứ tự gõ `ươ`, chỉ cần lướt phím lệch 1 nhịp là rớt dấu.
+
+### ⚡ VuiKey giải quyết thế nào? — Nhanh tức thì & Thông minh thực sự:
+1. **Tự hiểu Tiếng Anh mà không cần tắt bộ gõ (`Smart English Guard`):** Tự động phân tích cấu trúc âm vị để giữ nguyên 100% từ tiếng Anh (`window`, `test`, `function`, `server`, `linux`...) ngay khi đang bật Tiếng Việt.
+2. **Bấm `Backspace` sửa dấu ăn ngay (`Instant Unseal`):** Xóa lùi 1 nhịp là mở khóa âm tiết ngay lập tức để bạn bỏ dấu hoặc sửa vần tiếp, không bao giờ phải xóa sạch cả từ.
+3. **Gõ tự do mọi thứ tự (`Free-Style Telex / VNI`):** Gõ chữ `d` thứ hai ở bất kỳ đâu trong từ (`dodongj`, `doongjd` ➔ **`động`**) và nhận trọn cả **5 cách gõ `ươ`** (`dduowcj`, `dduocwj`, `dduwowcj`, `dduwocwj`, `dduwocj` ➔ **`được`**).
+4. **Không gạch chân, không nhân đôi chữ, độ trễ `0.00ms` (`Zero-Preedit & Sliding Syllable Window`):** Tự tách từng âm tiết kể cả khi viết liền không dấu cách (`nhacjdiujdangf` ➔ **`nhạcdịudàng`**), triệt tiêu 100% lỗi nhân đôi chữ và lỗi nuốt chữ thanh địa chỉ trên **Linux, Windows, macOS & iOS**.
+
+*Phát triển bởi [**Công ty TNHH eChip (`echipco.com`)**](https://echipco.com) & [**VuiCaHat (`vuicahat.com`)**](https://vuicahat.com).*
 
 ---
 

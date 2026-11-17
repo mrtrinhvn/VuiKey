@@ -100,4 +100,36 @@ func VuiCoreProcessKey(ch C.uint, outCommit **C.char, outPreedit **C.char) C.int
 	return 1
 }
 
+//export VuiCoreProcessKeyZeroPreedit
+func VuiCoreProcessKeyZeroPreedit(ch C.uint, outBackspaces *C.int, outCommit **C.char) C.int {
+	mu.Lock()
+	defer mu.Unlock()
+	syncConfigLocked()
+	act := globalE.ProcessKey(rune(ch))
+	if !act.Swallow {
+		*outBackspaces = 0
+		*outCommit = nil
+		return 0
+	}
+	*outBackspaces = C.int(act.Backspaces)
+	*outCommit = C.CString(act.CommitText)
+	return 1
+}
+
+//export VuiCoreCheckMacroOnSpace
+func VuiCoreCheckMacroOnSpace(outBackspaces *C.int, outCommit **C.char) C.int {
+	mu.Lock()
+	defer mu.Unlock()
+	syncConfigLocked()
+	act, ok := globalE.CheckMacroOnSpace()
+	if !ok {
+		*outBackspaces = 0
+		*outCommit = nil
+		return 0
+	}
+	*outBackspaces = C.int(act.Backspaces)
+	*outCommit = C.CString(act.CommitText)
+	return 1
+}
+
 func main() {}
