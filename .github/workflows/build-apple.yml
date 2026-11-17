@@ -1,0 +1,35 @@
+name: Build Apple Ecosystem (macOS Universal & Swift Tests)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build macOS Universal App (.app, .zip, .dmg) & Run Swift Tests
+        run: |
+          chmod +x ./scripts/build-apple.sh
+          ./scripts/build-apple.sh
+
+      - name: Upload macOS Artifacts to GitHub Release v1.0.0
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload v1.0.0 \
+            dist/VuiKey-1.0.0-macos-universal.dmg \
+            dist/VuiKey-1.0.0-macos-universal.zip \
+            --clobber

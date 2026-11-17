@@ -20,11 +20,12 @@ else
     echo "➔ [2/3] Swift toolchain not detected on this host; skipping 'swift test'."
 fi
 
-# 3. Build macOS Universal App Bundle (.app) if running on macOS (Darwin)
+# 3. Build macOS Universal App Bundle (.app, .zip, .dmg) if running on macOS (Darwin)
 if [[ "$(uname -s)" == "Darwin" ]]; then
     echo "➔ [3/3] Building macOS Universal Binary (arm64 + amd64) -> dist/VuiKey.app..."
     APP_DIR="$ROOT_DIR/dist/VuiKey.app"
-    mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
+    rm -rf "$APP_DIR" "$ROOT_DIR/dist/VuiKey-1.0.0-macos-universal.zip" "$ROOT_DIR/dist/VuiKey-1.0.0-macos-universal.dmg"
+    mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources" "$ROOT_DIR/build"
 
     CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o "$ROOT_DIR/build/vuikey_darwin_arm64" ./cmd/vuikey_darwin
     CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o "$ROOT_DIR/build/vuikey_darwin_amd64" ./cmd/vuikey_darwin
@@ -32,6 +33,7 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
     lipo -create -output "$APP_DIR/Contents/MacOS/VuiKey" \
         "$ROOT_DIR/build/vuikey_darwin_arm64" \
         "$ROOT_DIR/build/vuikey_darwin_amd64"
+    chmod +x "$APP_DIR/Contents/MacOS/VuiKey"
 
     cat > "$APP_DIR/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -46,6 +48,8 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
     <string>VuiKey</string>
     <key>CFBundleDisplayName</key>
     <string>VuiKey Vietnamese Input</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
     <key>CFBundleVersion</key>
     <string>1.0.0</string>
     <key>CFBundleShortVersionString</key>
@@ -60,8 +64,24 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
 </plist>
 EOF
 
-    (cd "$ROOT_DIR/dist" && zip -r -q "VuiKey-1.0.0-macos-universal.zip" "VuiKey.app")
-    echo "✅ Built macOS Universal App: dist/VuiKey.app & dist/VuiKey-1.0.0-macos-universal.zip"
+    # Ad-hoc code sign the app bundle
+    codesign --force --deep --sign - "$APP_DIR"
+
+    # Create .zip archive (preserving macOS bundle metadata)
+    (cd "$ROOT_DIR/dist" && ditto -c -k --sequesterRsrc --keepParent "VuiKey.app" "VuiKey-1.0.0-macos-universal.zip")
+
+    # Create .dmg installer image
+    DMG_STAGE="$ROOT_DIR/build/dmg_stage"
+    rm -rf "$DMG_STAGE"
+    mkdir -p "$DMG_STAGE"
+    cp -R "$APP_DIR" "$DMG_STAGE/"
+    ln -s /Applications "$DMG_STAGE/Applications"
+    hdiutil create -volname "VuiKey" -srcfolder "$DMG_STAGE" -ov -format UDZO "$ROOT_DIR/dist/VuiKey-1.0.0-macos-universal.dmg"
+
+    echo "✅ Built macOS Universal App:"
+    echo "   • dist/VuiKey.app"
+    echo "   • dist/VuiKey-1.0.0-macos-universal.zip"
+    echo "   • dist/VuiKey-1.0.0-macos-universal.dmg"
 else
     echo "➔ [3/3] Host is $(uname -s) (macOS Cocoa/CGEventTap requires Xcode SDK on macOS to link)."
     echo "        Run ./scripts/build-apple.sh on a Mac or GitHub Actions macos-latest runner to produce dist/VuiKey.app."

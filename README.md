@@ -1,10 +1,10 @@
 # VuiKey Studio 🇻🇳⚡⌨️
 
 [![Language: VI | EN](https://img.shields.io/badge/🌐_Language-Tiếng_Việt_%7C_English-38bdf8?style=flat-square)](#-giới-thiệu-vuikey)
-[![Download .deb](https://img.shields.io/badge/📦_Linux_.deb-(Ubuntu_%7C_Mint_%7C_Pop!__OS)-10b981?style=flat-square)](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/vuikey_1.0.0_amd64.deb)
+[![Download macOS](https://img.shields.io/badge/🍎_macOS_(M1--M4_%26_Intel)-VuiKey.dmg_/_Universal_.zip-a855f7?style=flat-square)](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/VuiKey-1.0.0-macos-universal.dmg)
 [![Download Windows](https://img.shields.io/badge/🪟_Windows_10/11-VuiKey.exe_(Portable_.zip)-0ea5e9?style=flat-square)](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/VuiKey-1.0.0-windows-amd64.zip)
-[![AI Agent Native](https://img.shields.io/badge/🤖_AI_Agent_Native-Antigravity_%7C_Claude_Code_%7C_Codex-8b5cf6?style=flat-square)](AGENTS.md)
-[![Linux, Windows, macOS & iOS](https://img.shields.io/badge/💻_OS-Linux_%7C_Windows_%7C_macOS_%7C_iOS-f97316?style=flat-square)](#-bảng-tương-thích-hệ-điều-hành-linux--windows)
+[![Download .deb](https://img.shields.io/badge/🐧_Linux_.deb-(Ubuntu_%7C_Mint_%7C_Pop!__OS)-10b981?style=flat-square)](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/vuikey_1.0.0_amd64.deb)
+[![Platform](https://img.shields.io/badge/💻_Hệ_Sinh_Thái-macOS_%7C_iOS_%7C_Windows_%7C_Linux-f97316?style=flat-square)](#-bảng-tương-thích-hệ-điều-hành-macos--ios--windows--linux)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
 <p align="center">
@@ -16,32 +16,38 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/vuikey-hero-overview.svg" alt="VuiKey Studio — Bộ Gõ Tiếng Việt Thế Hệ Mới Cho Linux & Windows" width="100%">
+  <img src="docs/assets/vuikey-hero-overview.svg" alt="VuiKey Studio — Bộ Gõ Tiếng Việt Thế Hệ Mới Cho macOS, iOS, Windows & Linux" width="100%">
 </p>
 
 ---
 
-# 🇻🇳 Giới Thiệu VuiKey
+# 🇻🇳 Giới Thiệu VuiKey (macOS • iOS • Windows • Linux)
 
-> **Bộ gõ tiếng Việt ngày nay không phải là thứ gì đao to búa lớn — nhưng nó lập tức tạo ra khác biệt khi giải quyết dứt điểm những phiền toái đã tồn tại suốt nhiều năm mà chưa bộ gõ nào xử lý trọn vẹn.**
+> **Bộ gõ tiếng Việt ngày nay không còn là thứ gì đao to búa lớn — nhưng nó lập tức tạo ra khác biệt khi giải quyết dứt điểm những "nỗi đau" tồn tại suốt nhiều năm trên cả hệ sinh thái Apple (Mac, iPhone/iPad), Windows lẫn Linux mà chưa bộ gõ nào xử lý trọn vẹn.**
 
-### ❌ Những "nỗi đau" kinh điển khi dùng các bộ gõ khác:
-- **Gõ tiếng Anh xen kẽ bị biến dạng chữ:** Đang bật Tiếng Việt mà gõ `window`, `view`, `test`, `user`, `server`, `linux`... là lập tức biến thành `ưindoư`, `vieư`, `tét`, `úer`, `lĩnu` — buộc phải xóa đi và bấm đổi ngôn ngữ liên tục.
-- **Sửa 1 ký tự phải xóa lại cả từ:** Lỡ gõ nhầm 1 phím rồi bấm `Backspace` xóa đi, nhưng gõ lại dấu sắc/huyền/mũ/móc thì bộ gõ "đơ" không nhận nữa, bắt phải xóa lùi về tận chữ cái đầu tiên.
-- **Nhân đôi chữ hoặc nuốt chữ đầu:** Gõ nhanh trên thanh địa chỉ trình duyệt (Chrome, Safari, Spotlight) hoặc gõ chuỗi dài không dấu cách rồi bấm `Delete`/`Backspace` bị nhảy đúp cả cụm chữ hoặc mất chữ cái đầu.
-- **Gõ nhanh bị rớt dấu:** Bắt phải gõ `dd` ngay đầu từ hoặc ép đúng 1 thứ tự gõ `ươ`, chỉ cần lướt phím lệch 1 nhịp là rớt dấu.
+### ❌ Những "nỗi đau" kinh điển tồn tại nhiều năm ở các bộ gõ khác:
+- **Trên Mac & iOS — Gạch chân khó chịu, nuốt chữ đầu & lỗi thanh địa chỉ:** Bộ gõ mặc định trên macOS luôn hiện dấu gạch chân (`preedit`), khi gõ nhanh vào thanh tìm kiếm **Spotlight, Safari, Chrome, Arc** hoặc trong **VS Code, Notion** thường xuyên bị **nuốt mất chữ cái đầu**, nhảy đúp chữ khi có gợi ý URL tự động (`Autocomplete`), hoặc lộn thứ tự phím.
+- **Đang gõ Tiếng Việt mà gõ Tiếng Anh là hỏng chữ:** Trên cả Mac, iPhone, Windows và Linux, khi đang bật Tiếng Việt mà gõ xen kẽ `window`, `view`, `test`, `user`, `server`, `linux`, `docker`... là lập tức bị biến thành `ưindoư`, `vieư`, `tét`, `úer`, `lĩnu` — buộc phải xóa đi và bấm đổi ngôn ngữ liên tục.
+- **Sửa 1 ký tự phải xóa sạch cả từ:** Lỡ gõ nhầm 1 phím rồi bấm `Backspace` xóa đi, nhưng khi gõ tiếp dấu sắc/huyền/mũ/móc thì bộ gõ "đơ" không nhận nữa, bắt phải xóa lùi về tận chữ cái đầu tiên mới bỏ dấu lại được.
+- **Nhân đôi cả cụm chữ & rớt dấu khi gõ nhanh:** Gõ chuỗi dài không dấu cách (tên file, URL, hashtag) rồi bấm `Delete`/`Backspace` bị nhảy đúp cả đoạn chữ; hoặc gõ chữ `đ` và nguyên âm đôi `ươ` lệch thứ tự một nhịp là rớt dấu.
 
-### ⚡ VuiKey giải quyết thế nào? — Nhanh tức thì & Thông minh thực sự:
-1. **Tự hiểu Tiếng Anh mà không cần tắt bộ gõ (`Smart English Guard`):** Tự động phân tích cấu trúc âm vị để giữ nguyên 100% từ tiếng Anh (`window`, `test`, `function`, `server`, `linux`...) ngay khi đang bật Tiếng Việt.
-2. **Bấm `Backspace` sửa dấu ăn ngay (`Instant Unseal`):** Xóa lùi 1 nhịp là mở khóa âm tiết ngay lập tức để bạn bỏ dấu hoặc sửa vần tiếp, không bao giờ phải xóa sạch cả từ.
-3. **Gõ tự do mọi thứ tự (`Free-Style Telex / VNI`):** Gõ chữ `d` thứ hai ở bất kỳ đâu trong từ (`dodongj`, `doongjd` ➔ **`động`**) và nhận trọn cả **5 cách gõ `ươ`** (`dduowcj`, `dduocwj`, `dduwowcj`, `dduwocwj`, `dduwocj` ➔ **`được`**).
-4. **Không gạch chân, không nhân đôi chữ, độ trễ `0.00ms` (`Zero-Preedit & Sliding Syllable Window`):** Tự tách từng âm tiết kể cả khi viết liền không dấu cách (`nhacjdiujdangf` ➔ **`nhạcdịudàng`**), triệt tiêu 100% lỗi nhân đôi chữ và lỗi nuốt chữ thanh địa chỉ trên **Linux, Windows, macOS & iOS**.
+### ⚡ VuiKey giải quyết thế nào? — Nhanh `0.00ms` & Thông minh thực sự trên mọi thiết bị:
+1. **Không gạch chân & Triệt tiêu lỗi Spotlight / Safari / Chrome trên Mac (`Zero-Preedit + Autocomplete Fix`):** Can thiệp trực tiếp ở tầng `CGEventTap` (macOS), `WH_KEYBOARD_LL` (Windows), `PreInputMethod` (Linux) và `UITextDocumentProxy` (iOS) — không bao giờ có gạch chân, tự động xử lý vùng bôi đen gợi ý trên trình duyệt để không bao giờ nuốt chữ đầu hay nhảy đúp chữ.
+2. **Tự hiểu Tiếng Anh mà không cần tắt bộ gõ (`Smart English Guard`):** Phân tích âm vị học thời gian thực để tự động giữ nguyên 100% từ tiếng Anh (`window`, `test`, `function`, `server`, `linux`...) ngay khi đang bật Tiếng Việt.
+3. **Bấm `Backspace` 1 nhịp sửa dấu ăn ngay (`Instant Unseal`):** Xóa lùi 1 ký tự là mở khóa âm tiết ngay lập tức để bạn bỏ dấu hoặc sửa vần tiếp, không bao giờ phải xóa lại từ đầu.
+4. **Gõ tự do mọi thứ tự & Tự tách âm tiết viết liền (`Free-Style Telex/VNI + Sliding Syllable Window`):** Cho phép gõ chữ `d` thứ hai ở bất kỳ đâu trong từ (`dodongj`, `doongjd` ➔ **`động`**), nhận trọn **5 cách gõ `ươ`** (`dduowcj`, `dduocwj`, `dduwowcj`, `dduwocwj`, `dduwocj` ➔ **`được`**) và tự động tách từng âm tiết kể cả khi viết dính liền không dấu cách (`nhacjdiujdangf` ➔ **`nhạcdịudàng`**).
 
 *Phát triển bởi [**Công ty TNHH eChip (`echipco.com`)**](https://echipco.com) & [**VuiCaHat (`vuicahat.com`)**](https://vuicahat.com).*
 
 ---
 
-## 🚀 Tải Về & Cài Đặt Nhanh (Linux & Windows)
+## 🚀 Tải Về & Cài Đặt Nhanh (macOS • iOS • Windows • Linux)
+
+### 🍎 Cho macOS (Apple Silicon M1/M2/M3/M4 & Intel — Universal Binary) & iOS
+- **Tải bản cài đặt `.dmg` (macOS 12+):** [**`VuiKey-1.0.0-macos-universal.dmg`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/VuiKey-1.0.0-macos-universal.dmg)
+- **Tải bản nén `.zip` (`VuiKey.app`):** [**`VuiKey-1.0.0-macos-universal.zip`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/VuiKey-1.0.0-macos-universal.zip)
+- Kéo **`VuiKey.app`** vào thư mục `Applications`, mở ứng dụng và cấp quyền **Accessibility** (`System Settings ➔ Privacy & Security ➔ Accessibility`). Biểu tượng **`🇻🇳 V` / `🇬🇧 E`** sẽ xuất hiện trên thanh Menu Bar (chuyển nhanh bằng `Ctrl + Space`).
+- **Cho iOS (iPhone / iPad) & Xcode:** Mở gói Swift Package tại [`apple/VuiKeyKit`](apple/VuiKeyKit) và Keyboard Extension tại [`apple/iOS/VuiKeyKeyboardViewController.swift`](apple/iOS/VuiKeyKeyboardViewController.swift) (siêu nhẹ `< 2 MB RAM`, hỗ trợ Haptic Feedback & vuốt Spacebar di chuyển con trỏ).
 
 ### 🪟 Cho Windows 10 / Windows 11 (64-bit Portable — Chạy ngay, không cần cài đặt)
 - **Tải trực tiếp:** [**`VuiKey-1.0.0-windows-amd64.zip`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/VuiKey-1.0.0-windows-amd64.zip)
@@ -60,7 +66,7 @@ curl -fsSL https://raw.githubusercontent.com/mrtrinhvn/VuiKey/main/scripts/insta
 ```
 
 ### 🤖 Cách 3: Giao cho AI Agent (Google Antigravity / Claude Code / Codex / Cursor)
-> *"Hãy clone `https://github.com/mrtrinhvn/VuiKey`, đọc `AGENTS.md`, tự động cài đặt VuiKey và bật giao diện `VuiKey Studio` cho tôi."*
+> *"Hãy clone `https://github.com/mrtrinhvn/VuiKey`, đọc `AGENTS.md`, tự động cài đặt VuiKey và bật bộ gõ cho tôi."*
 
 ---
 
@@ -84,29 +90,31 @@ curl -fsSL https://raw.githubusercontent.com/mrtrinhvn/VuiKey/main/scripts/insta
 - **Vấn đề thường gặp ở các bộ gõ khác:** Khi bạn gõ các chuỗi dài không dấu cách (như tên file, đường dẫn URL, mật khẩu, hashtag hoặc chuỗi thẻ `nhacdidangnhactiengdidangtiengchoitai`) rồi ấn phím `Delete`, `Backspace` hoặc phím mũi tên, bộ đệm gạch chân bị giữ quá dài sẽ gây xung đột sự kiện làm **nhân đôi cả đoạn chữ** (`nhacdidang...hacdidang...`) trên thanh địa chỉ trình duyệt và các trình soạn thảo hiện đại.
 - **Cách VuiKey xử lý:** Tự động nhận biết ranh giới âm tiết Tiếng Việt để ngắt và chốt từng âm tiết ngay khi bạn đang gõ dính liền (`nhac | di | dang | nhac | tieng | di | dang | tieng | choi | tai`). Ngay cả khi gõ dính liền có dấu (`nhacjdiujdangfnhacjtieengschoitai`), VuiKey vẫn phân tách chuẩn xác thành **`nhạcdịudàngnhạctiếngchoitai`** và ấn `Delete` không bao giờ bị nhảy đúp chữ.
 
-### 5. ⚡ Kiến Trúc Native `0.00ms` — Không Giật Lag Với Cả Bàn Phím Cơ & Bàn Phím Bluetooth
+### 5. ⚡ Kiến Trúc Native `0.00ms` Trên Cả 4 Hệ Điều Hành (`macOS` • `iOS` • `Windows` • `Linux`)
+- Trên **macOS (Apple Silicon & Intel)**, VuiKey bắt phím trực tiếp qua `CGEventTap` (`kCGHIDEventTap`) kết hợp cơ chế **Autocomplete Bar Fix** chuyên biệt cho Safari, Chrome, Arc, Brave, Edge và Spotlight — triệt tiêu hoàn toàn dấu gạch chân (`Zero-Preedit`) và lỗi nuốt chữ cái đầu.
+- Trên **iOS (iPhone & iPad)**, gói `VuiKeyKit` viết bằng Pure Swift chiếm chưa tới `2 MB RAM` (an toàn tuyệt đối trong giới hạn bộ nhớ của `UIInputViewController`), tích hợp Haptic Feedback và vuốt phím Spacebar di chuyển con trỏ.
+- Trên **Windows 10/11**, VuiKey sử dụng `WH_KEYBOARD_LL` kết hợp gói sự kiện `KEYEVENTF_UNICODE` nguyên tử ở mức nhân Win32 với độ trễ `0.00ms`.
 - Trên **Linux**, VuiKey hoạt động ở tầng ưu tiên cao nhất (`PreInputMethod` trong `libvuikey-fcitx5.so`), truyền trực tiếp chuỗi UTF-8 nguyên tử vào ứng dụng mà không gây hiện tượng chuyển đổi thiết bị bàn phím ảo (`XTest Slave Device Switching`), triệt tiêu hoàn toàn độ trễ `40–80ms` trên GNOME Shell / Mutter khi dùng bàn phím rời hoặc Bluetooth.
-- Trên **Windows**, VuiKey sử dụng `WH_KEYBOARD_LL` kết hợp gói sự kiện `KEYEVENTF_UNICODE` nguyên tử ở mức nhân Win32 với độ trễ `0.00ms`.
 
 ---
 
-## 📋 Bảng Tương Thích Hệ Điều Hành (Linux & Windows)
+## 📋 Bảng Tương Thích Hệ Điều Hành (macOS • iOS • Windows • Linux)
 
-| Nhóm Hệ Điều Hành | Các phiên bản / Bản phân phối hỗ trợ | Kiến trúc hiển thị | Gói cài đặt khuyên dùng |
+| Nhóm Hệ Điều Hành | Các phiên bản / Thiết bị hỗ trợ | Kiến trúc lõi (`0.00ms`) | Gói cài đặt khuyên dùng |
 | :--- | :--- | :--- | :--- |
-| **1. Windows 10 / 11** | • **Windows 10 & Windows 11 (64-bit)**<br>• Chạy ngay (Portable), không cần cài đặt | ✅ **Win32 Native (`0.00ms`)** | [**`VuiKey-1.0.0-windows-amd64.zip`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/VuiKey-1.0.0-windows-amd64.zip) (`VuiKey.exe` Portable) |
-| **2. Họ Debian / Ubuntu** | • **Ubuntu** *(20.04, 22.04, 24.04 LTS)*<br>• **Pop!_OS** *(22.04, 24.04)*<br>• **Linux Mint** *(Cinnamon, MATE, XFCE)*<br>• **Debian** *(11, 12)*, **Zorin OS**, **Kali Linux**, **Elementary OS** | ✅ **X11 (Xorg)**<br>✅ **Wayland** | [**`vuikey_1.0.0_amd64.deb`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/vuikey_1.0.0_amd64.deb) hoặc `scripts/install-linux.sh` |
-| **3. Họ Red Hat / Fedora** | • **Fedora Workstation** *(38, 39, 40, 41)*<br>• **RHEL / Rocky Linux / AlmaLinux / CentOS Stream** | ✅ **X11 (Xorg)**<br>✅ **Wayland** | `scripts/install-linux.sh` hoặc [**`vuikey-1.0.0-linux-x86_64.tar.gz`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/vuikey-1.0.0-linux-x86_64.tar.gz) |
-| **4. Họ Arch Linux** | • **Arch Linux**<br>• **Manjaro**, **EndeavourOS**, **Garuda Linux** | ✅ **X11 & Wayland** *(KDE, GNOME, Hyprland, Sway, i3)* | `scripts/install-linux.sh` hoặc [**`vuikey-1.0.0-linux-x86_64.tar.gz`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/vuikey-1.0.0-linux-x86_64.tar.gz) |
-| **5. Họ SUSE** | • **openSUSE Leap & Tumbleweed** | ✅ **X11 & Wayland** | `scripts/install-linux.sh` |
+| **1. macOS (Apple)** | • **macOS 12 Monterey ➔ macOS 15 Sequoia**<br>• Chạy gốc trên cả **Apple Silicon (`M1/M2/M3/M4`)** & **Intel (`x86_64`)** | ✅ **`CGEventTap` Zero-Preedit**<br>✅ **Safari/Spotlight Fix** | [**`VuiKey-1.0.0-macos-universal.dmg`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/VuiKey-1.0.0-macos-universal.dmg) hoặc [`.zip`](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/VuiKey-1.0.0-macos-universal.zip) |
+| **2. iOS / iPadOS (Apple)** | • **iOS 15+ / iPadOS 15+**<br>• Custom Keyboard Extension (`UIInputViewController`) | ✅ **Pure Swift `VuiKeyKit`** (`< 2 MB RAM`) | Mã nguồn Xcode & SwiftPM tại [`apple/`](apple/) |
+| **3. Windows 10 / 11** | • **Windows 10 & Windows 11 (64-bit)**<br>• Chạy ngay (Portable), không cần cài đặt | ✅ **Win32 Native (`0.00ms`)** | [**`VuiKey-1.0.0-windows-amd64.zip`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/VuiKey-1.0.0-windows-amd64.zip) (`VuiKey.exe` Portable) |
+| **4. Họ Debian / Ubuntu** | • **Ubuntu** *(20.04, 22.04, 24.04 LTS)*, **Pop!_OS**, **Linux Mint**, **Debian** *(11, 12)*, **Zorin**, **Kali** | ✅ **X11 (Xorg)**<br>✅ **Wayland** | [**`vuikey_1.0.0_amd64.deb`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/vuikey_1.0.0_amd64.deb) hoặc `scripts/install-linux.sh` |
+| **5. Họ Fedora / Arch / SUSE** | • **Fedora Workstation** *(38–41)*, **RHEL / Rocky / Alma**<br>• **Arch Linux**, **Manjaro**, **EndeavourOS**, **openSUSE** | ✅ **X11 & Wayland** *(KDE, GNOME, Hyprland, Sway, i3)* | `scripts/install-linux.sh` hoặc [**`vuikey-1.0.0-linux-x86_64.tar.gz`**](https://github.com/mrtrinhvn/VuiKey/releases/latest/download/vuikey-1.0.0-linux-x86_64.tar.gz) |
 
 ---
 
 ## 💡 Câu Chuyện Ra Đời Của VuiKey — Từ Công ty TNHH eChip (`echipco.com`) & `VuiCaHat.com`
 
-Trong quá trình đội ngũ kỹ thuật [**Công ty TNHH eChip (`echipco.com`)**](https://echipco.com) phát triển hệ sinh thái sản phẩm công nghệ số và nền tảng phòng hát Karaoke trực tuyến & xử lý âm thanh Vocal DSP 48kHz [**VuiCaHat (`vuicahat.com`)**](https://vuicahat.com), việc nhập lời bài hát, gõ các chuỗi thẻ âm thanh viết liền không dấu cách và viết mã nguồn xen kẽ Tiếng Việt — Tiếng Anh đòi hỏi một bộ gõ thật sự thông minh, tốc độ phản hồi tức thì và không bao giờ phạm lỗi nhân đôi hay nuốt chữ.
+Trong quá trình đội ngũ kỹ thuật [**Công ty TNHH eChip (`echipco.com`)**](https://echipco.com) phát triển hệ sinh thái sản phẩm công nghệ số và nền tảng phòng hát Karaoke trực tuyến & xử lý âm thanh Vocal DSP 48kHz [**VuiCaHat (`vuicahat.com`)**](https://vuicahat.com), việc nhập lời bài hát, gõ các chuỗi thẻ âm thanh viết liền không dấu cách và viết mã nguồn xen kẽ Tiếng Việt — Tiếng Anh trên cả máy **Mac, iPhone, Windows lẫn Linux** đòi hỏi một bộ gõ thật sự thông minh, phản hồi tức thì và không bao giờ phạm lỗi gạch chân nuốt chữ hay nhân đôi chữ.
 
-Từ nhu cầu thực tiễn đó, chúng tôi đã nghiên cứu và xây dựng **VuiKey** với thuật toán âm vị học hoàn toàn mới, đồng thời mở mã nguồn miễn phí (MIT License) cho cả cộng đồng người dùng **Linux** và **Windows**.
+Từ nhu cầu thực tiễn đó, chúng tôi đã nghiên cứu và xây dựng **VuiKey** với thuật toán âm vị học hoàn toàn mới, đồng thời mở mã nguồn miễn phí (MIT License) cho cả cộng đồng người dùng **macOS, iOS, Windows và Linux**.
 
 - ⭐ Hãy tặng dự án 1 **Star** trên GitHub nếu **VuiKey** giúp công việc hàng ngày của bạn thuận tiện hơn!
 - 🎤 Trải nghiệm phòng hát Karaoke & xử lý giọng hát trực tuyến tại [**vuicahat.com**](https://vuicahat.com).
@@ -117,10 +125,10 @@ Từ nhu cầu thực tiễn đó, chúng tôi đã nghiên cứu và xây dựn
 
 # 🇺🇸 English Documentation
 
-**VuiKey** is a next-generation Vietnamese Input Method (`Telex`, `VNI`, `Telex + VNI`) for **Linux Desktop** (`X11` and `Wayland` across Ubuntu, Pop!_OS, Linux Mint, Debian, Fedora, Arch, openSUSE) and **Windows 10 / 11 (64-bit Portable)**, engineered by [**eChip Co., Ltd. (`echipco.com`)**](https://echipco.com) and [**VuiCaHat (`vuicahat.com`)**](https://vuicahat.com).
+**VuiKey** is a next-generation Vietnamese Input Method (`Telex`, `VNI`, `Telex + VNI`) for **macOS (`Apple Silicon & Intel`)**, **iOS (`iPhone & iPad`)**, **Windows 10 / 11 (`64-bit Portable`)**, and **Linux Desktop (`X11` & `Wayland`)**, engineered by [**eChip Co., Ltd. (`echipco.com`)**](https://echipco.com) and [**VuiCaHat (`vuicahat.com`)**](https://vuicahat.com).
 
 ### Key Technical Highlights
-1. **Phonotactic Smart English Guard:** Automatically preserves English words (`window`, `view`, `function`, `test`, `user`, `server`, `linux`, `docker`, `arrow`...) while Vietnamese mode remains active.
-2. **Instant Backspace Unsealing:** Pressing `Backspace` once immediately unseals the syllable state so you can re-apply tone or vowel marks without retyping the entire word.
-3. **Full Free-Style Telex & VNI:** Supports delayed `d ➔ đ` anywhere in the syllable (`dodongj`, `doongdj`, `doongjd` ➔ **`động`**) and all 5 typing orders for `ươ` (`dduowcj`, `dduocwj`, `dduwowcj`, `dduwocwj`, `dduwocj` ➔ **`được`**).
-4. **Sliding Syllable Window:** Automatically segments unspaced multi-syllable strings in real time, guaranteeing 100% immunity against the `Delete`/`Backspace` text-duplication bug.
+1. **Zero-Preedit & macOS Browser/Spotlight Fix:** Eliminates the intrusive preedit underline on macOS and prevents first-character swallowing or duplication in Safari, Chrome, Arc, and Spotlight autocomplete bars.
+2. **Phonotactic Smart English Guard:** Automatically preserves English words (`window`, `view`, `function`, `test`, `user`, `server`, `linux`, `docker`, `arrow`...) while Vietnamese mode remains active.
+3. **Instant Backspace Unsealing:** Pressing `Backspace` once immediately unseals the syllable state so you can re-apply tone or vowel marks without retyping the entire word.
+4. **Full Free-Style Telex & VNI + Sliding Syllable Window:** Supports delayed `d ➔ đ` anywhere in the syllable (`dodongj`, `doongdj`, `doongjd` ➔ **`động`**), all 5 typing orders for `ươ`, and real-time segmentation of unspaced multi-syllable strings.
