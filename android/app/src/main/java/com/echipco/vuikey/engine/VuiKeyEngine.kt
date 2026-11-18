@@ -104,7 +104,7 @@ class VuiKeyEngine(var config: VuiKeyConfig = VuiKeyConfig()) {
         if (!replacement.isNullOrEmpty()) {
             val bs = syllable.size
             reset()
-            return VuiKeyAction(swallow: false, backspaces = bs, commitText = replacement)
+            return VuiKeyAction(swallow = false, backspaces = bs, commitText = replacement)
         }
         reset()
         return null

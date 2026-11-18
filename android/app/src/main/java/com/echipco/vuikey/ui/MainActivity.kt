@@ -121,7 +121,7 @@ class MainActivity : Activity() {
             addView(hint)
 
             val input = EditText(this@MainActivity).apply {
-                hint = "Chạm vào đây để bật bàn phím VuiKey và gõ thử..."
+                setHint("Chạm vào đây để bật bàn phím VuiKey và gõ thử...")
                 setHintTextColor(Color.parseColor("#64748B"))
                 setTextColor(Color.parseColor("#38BDF8"))
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 15.5f)
