@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"strings"
 	"unicode"
 )
 
@@ -379,6 +380,116 @@ func ComputeMinimalDiff(oldSyl, newSyl []rune) (backspaces int, insert string) {
 	backspaces = len(oldSyl) - common
 	insert = string(newSyl[common:])
 	return backspaces, insert
+}
+
+// ExtractLastSyllableBeforeCursor extracts the contiguous letter sequence immediately
+// preceding the cursor (at the end of `textBeforeCursor`).
+func ExtractLastSyllableBeforeCursor(textBeforeCursor string) []rune {
+	runes := []rune(textBeforeCursor)
+	if len(runes) == 0 {
+		return nil
+	}
+	end := len(runes)
+	start := end
+	for start > 0 && unicode.IsLetter(runes[start-1]) {
+		start--
+	}
+	word := runes[start:end]
+	if len(word) == 0 || len(word) > 7 {
+		return nil
+	}
+	if start > 0 && unicode.IsDigit(runes[start-1]) {
+		return nil
+	}
+	return word
+}
+
+// IsValidVietnameseSyllableForReedit checks whether a standalone word before the cursor
+// has a valid Vietnamese syllable structure and is not a protected English word.
+func (e *Engine) IsValidVietnameseSyllableForReedit(word []rune) bool {
+	if len(word) == 0 || len(word) > 7 {
+		return false
+	}
+	if e.Cfg.SmartEnglish {
+		rawLower := strings.ToLower(string(word))
+		if commonEnglishTechWords[rawLower] {
+			return false
+		}
+		for i := 0; i < len(word) && i < 3; i++ {
+			if isEnglishOnlyPrefix(word[:i], word[i]) {
+				return false
+			}
+		}
+	}
+	dec := decompose(word)
+	initLower := lowerBaseString(dec.initial)
+	if !validInitials[initLower] {
+		return false
+	}
+	if len(dec.vowels) == 0 {
+		return len(dec.initial) == 1 && (initLower == "d" || initLower == "đ") && len(dec.final) == 0
+	}
+	if len(dec.vowels) > 3 {
+		return false
+	}
+	finalLower := lowerASCIIString(dec.final)
+	if !validFinals[finalLower] {
+		return false
+	}
+	if len(dec.final) > 0 {
+		vBase := lowerBaseString(dec.vowels)
+		if closedVowelNuclei[vBase] {
+			return false
+		}
+	}
+	return true
+}
+
+// TryModifySurroundingWord inspects the word immediately before the cursor when the active syllable buffer
+// is empty (e.g. after moving the cursor to the end of an existing word).
+// If `word` is a valid Vietnamese syllable and `ch` is a tone/diacritic key that validly transforms `word`
+// without triggering a double-key undo, it returns an Action(Swallow=true, Backspaces, CommitText).
+func (e *Engine) TryModifySurroundingWord(textBeforeCursor string, ch rune) (Action, bool) {
+	if !e.Cfg.Enabled || len(e.syllable) > 0 {
+		return Action{}, false
+	}
+	if !unicode.IsLetter(ch) && !unicode.IsDigit(ch) {
+		return Action{}, false
+	}
+	if unicode.IsDigit(ch) && e.Cfg.Mode == ModeTelex {
+		return Action{}, false
+	}
+	word := ExtractLastSyllableBeforeCursor(textBeforeCursor)
+	if !e.IsValidVietnameseSyllableForReedit(word) {
+		return Action{}, false
+	}
+	dec := decompose(word)
+	if !isModifierForSyllable(dec, ch, e.Cfg.Mode) {
+		return Action{}, false
+	}
+
+	savedRaw := e.rawHistory
+	savedDelayedD := e.delayedD
+	e.rawHistory = append(append([]rune(nil), word...), ch)
+	newSyl, transformed, undone := e.tryTransform(word, ch)
+	e.rawHistory = savedRaw
+	e.delayedD = savedDelayedD
+
+	if !transformed || len(newSyl) == 0 || undone {
+		return Action{}, false
+	}
+	if e.Cfg.SmartEnglish && checkAutoRestoreEnglish(newSyl, append(append([]rune(nil), word...), ch)) {
+		return Action{}, false
+	}
+	bs, ins := ComputeMinimalDiff(word, newSyl)
+	if bs == 0 && ins == "" {
+		return Action{}, false
+	}
+	return Action{
+		Swallow:    true,
+		Backspaces: bs,
+		CommitText: ins,
+	}, true
 }
 
 // ProcessKeyForIME processes a printable character for the Native Fcitx5 Engine.

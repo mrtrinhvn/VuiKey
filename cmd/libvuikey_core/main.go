@@ -132,4 +132,33 @@ func VuiCoreCheckMacroOnSpace(outBackspaces *C.int, outCommit **C.char) C.int {
 	return 1
 }
 
+//export VuiCoreTryModifySurrounding
+func VuiCoreTryModifySurrounding(cText *C.char, cursorCharPos C.uint, ch C.uint, outBackspaces *C.int, outCommit **C.char) C.int {
+	mu.Lock()
+	defer mu.Unlock()
+	syncConfigLocked()
+	if cText == nil || len(globalE.CurrentSyllable()) > 0 {
+		*outBackspaces = 0
+		*outCommit = nil
+		return 0
+	}
+	fullRunes := []rune(C.GoString(cText))
+	pos := int(cursorCharPos)
+	if pos <= 0 || pos > len(fullRunes) {
+		*outBackspaces = 0
+		*outCommit = nil
+		return 0
+	}
+	textBefore := string(fullRunes[:pos])
+	act, ok := globalE.TryModifySurroundingWord(textBefore, rune(ch))
+	if !ok || !act.Swallow {
+		*outBackspaces = 0
+		*outCommit = nil
+		return 0
+	}
+	*outBackspaces = C.int(act.Backspaces)
+	*outCommit = C.CString(act.CommitText)
+	return 1
+}
+
 func main() {}

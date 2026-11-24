@@ -557,12 +557,29 @@ func (e *Engine) tryTransform(oldSyl []rune, ch rune) ([]rune, bool, bool) {
 		}
 
 		if wantedTone == ToneNone {
-			if curTone == ToneNone {
-				return nil, false, false
+			if curTone != ToneNone {
+				meta := runeToMeta[syl[curToneIdx]]
+				syl[curToneIdx] = applyToneToBase(meta.base, ToneNone)
+				return syl, true, false
 			}
-			meta := runeToMeta[syl[curToneIdx]]
-			syl[curToneIdx] = applyToneToBase(meta.base, ToneNone)
-			return syl, true, false
+			// Second-stage 'z'/'0': if syllable has no tone, strip Vietnamese vowel hats/horns/breve (ă, â, ê, ô, ơ, ư) or đ/Đ
+			stripped := false
+			for i, r := range syl {
+				if r == 'đ' {
+					syl[i] = 'd'
+					stripped = true
+				} else if r == 'Đ' {
+					syl[i] = 'D'
+					stripped = true
+				} else if meta, ok := runeToMeta[r]; ok && unicode.ToLower(meta.base) != meta.ascii {
+					syl[i] = changeVowelShape(r, meta.ascii)
+					stripped = true
+				}
+			}
+			if stripped {
+				return syl, true, false
+			}
+			return nil, false, false
 		}
 
 		// Double-key undo: pressing the same tone key twice removes the tone and appends the raw key!

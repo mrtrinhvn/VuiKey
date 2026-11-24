@@ -233,3 +233,54 @@ func TestVNIModeAndCombinedMode(t *testing.T) {
 	}
 }
 
+func TestTryModifySurroundingWordAtCursor(t *testing.T) {
+	eng := NewEngine(DefaultConfig())
+
+	applyAtCursor := func(before string, keys string) string {
+		eng.Reset()
+		screen := []rune(before)
+		for _, ch := range keys {
+			if act, ok := eng.TryModifySurroundingWord(string(screen), ch); ok && act.Swallow {
+				screen = screen[:len(screen)-act.Backspaces]
+				screen = append(screen, []rune(act.CommitText)...)
+			} else {
+				screen = append(screen, ch)
+			}
+		}
+		return string(screen)
+	}
+
+	cases := []struct {
+		before string
+		keys   string
+		want   string
+	}{
+		// Add tone to an existing untoned word at cursor
+		{"Xin chào tôi", "s", "Xin chào tối"},
+		{"Xin chào tối", "f", "Xin chào tồi"},
+		// Remove tone with 'z', then remove vowel circumflex with second 'z'
+		{"Xin chào tối", "z", "Xin chào tôi"},
+		{"Xin chào tối", "zz", "Xin chào toi"},
+		// Add horn 'w' and tone 's' to an existing word "tuong" -> "tướng"
+		{"công tuong", "ws", "công tướng"},
+		// Remove tone and horn from "được" -> "đươc" -> "duoc"
+		{"làm được", "z", "làm đươc"},
+		{"làm được", "zz", "làm duoc"},
+		// Add delayed 'd', 'o', 'j' to "dong" -> "động"
+		{"chủ dong", "doj", "chủ động"},
+		// Must NOT modify protected English words when cursor is placed at the end
+		{"run test", "s", "run tests"},
+		{"active user", "s", "active users"},
+		{"main server", "s", "main servers"},
+		// Non-modifier consonants at the end of a word must NOT modify the word
+		{"nghe nhạc", "k", "nghe nhạck"},
+	}
+
+	for _, tc := range cases {
+		got := applyAtCursor(tc.before, tc.keys)
+		if got != tc.want {
+			t.Errorf("Cursor after %q + keys %q: got %q, want %q", tc.before, tc.keys, got, tc.want)
+		}
+	}
+}
+

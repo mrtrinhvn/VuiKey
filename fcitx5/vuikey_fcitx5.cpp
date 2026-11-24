@@ -161,6 +161,28 @@ private:
         // 3. Printable ASCII character
         uint32_t ucs4 = Key::keySymToUnicode(sym);
         if (ucs4 >= 0x20 && ucs4 <= 0x7e) {
+            // 3a. If active syllable is empty (user just moved cursor or clicked at the end of an existing word),
+            // check if `ucs4` is a tone/diacritic modifier that can validly transform the word right before the cursor!
+            if (ic->capabilityFlags().test(CapabilityFlag::SurroundingText) &&
+                ic->surroundingText().isValid()) {
+                int surBs = 0;
+                char *cSurCommit = nullptr;
+                const std::string &surText = ic->surroundingText().text();
+                unsigned int curPos = ic->surroundingText().cursor();
+                if (VuiCoreTryModifySurrounding(const_cast<char *>(surText.c_str()), curPos, ucs4, &surBs, &cSurCommit)) {
+                    std::string surCommitStr = cSurCommit ? cSurCommit : "";
+                    if (cSurCommit) free(cSurCommit);
+                    if (surBs > 0) {
+                        ic->deleteSurroundingText(-surBs, surBs);
+                    }
+                    if (!surCommitStr.empty()) {
+                        ic->commitString(surCommitStr);
+                    }
+                    keyEvent.filterAndAccept();
+                    return;
+                }
+            }
+
             char *cCommit = nullptr;
             char *cPreedit = nullptr;
             int handled = VuiCoreProcessKey(ucs4, &cCommit, &cPreedit);

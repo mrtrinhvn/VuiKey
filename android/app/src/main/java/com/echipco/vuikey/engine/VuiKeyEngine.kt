@@ -211,6 +211,59 @@ class VuiKeyEngine(var config: VuiKeyConfig = VuiKeyConfig()) {
         return VuiKeyAction(swallow = false)
     }
 
+    fun isValidVietnameseSyllableForReedit(word: List<Char>): Boolean {
+        if (word.isEmpty() || word.size > 7) return false
+        if (config.smartEnglish) {
+            val rawLower = word.joinToString("") { it.lowercaseChar().toString() }
+            if (commonEnglishTechWords.contains(rawLower)) return false
+            for (i in 0 until minOf(word.size, 3)) {
+                if (isEnglishOnlyPrefix(word.subList(0, i), word[i])) return false
+            }
+        }
+        val dec = decompose(word)
+        val initLower = lowerBaseString(dec.initial)
+        if (!validInitials.contains(initLower)) return false
+        if (dec.vowels.isEmpty()) {
+            return dec.initial.size == 1 && (initLower == "d" || initLower == "đ") && dec.finalConsonants.isEmpty()
+        }
+        if (dec.vowels.size > 3) return false
+        val finalLower = lowerASCIIString(dec.finalConsonants)
+        if (!validFinals.contains(finalLower)) return false
+        if (dec.finalConsonants.isNotEmpty()) {
+            val vBase = lowerBaseString(dec.vowels)
+            if (closedVowelNuclei.contains(vBase)) return false
+        }
+        return true
+    }
+
+    fun tryModifySurroundingWord(textBeforeCursor: String, ch: Char): VuiKeyAction? {
+        if (!config.enabled || syllable.isNotEmpty()) return null
+        if (!ch.isLetter() && !ch.isDigit()) return null
+        if (ch.isDigit() && config.mode == InputMode.TELEX) return null
+        val word = extractLastSyllableBeforeCursor(textBeforeCursor) ?: return null
+        if (!isValidVietnameseSyllableForReedit(word)) return null
+        val dec = decompose(word)
+        if (!isModifierForSyllable(dec, ch, config.mode)) return null
+
+        val savedRaw = ArrayList(rawHistory)
+        val savedDelayedD = delayedD
+        rawHistory.clear()
+        rawHistory.addAll(word)
+        rawHistory.add(ch)
+        val (newSyl, transformed, undone) = tryTransform(word, ch)
+        rawHistory.clear()
+        rawHistory.addAll(savedRaw)
+        delayedD = savedDelayedD
+
+        if (!transformed || newSyl.isNullOrEmpty() || undone) return null
+        val combinedHistory = ArrayList(word).apply { add(ch) }
+        if (config.smartEnglish && checkAutoRestoreEnglish(newSyl, combinedHistory)) return null
+
+        val (bs, ins) = computeMinimalDiff(word, newSyl)
+        if (bs == 0 && ins.isEmpty()) return null
+        return VuiKeyAction(swallow = true, backspaces = bs, commitText = ins)
+    }
+
     private fun tryTransform(oldSyl: List<Char>, ch: Char): Triple<List<Char>?, Boolean, Boolean> {
         if (oldSyl.isEmpty()) return Triple(null, false, false)
 
@@ -311,10 +364,29 @@ class VuiKeyEngine(var config: VuiKeyConfig = VuiKeyConfig()) {
             }
 
             if (wantedTone == Tone.NONE) {
-                if (curTone == Tone.NONE) return Triple(null, false, false)
-                val meta = runeToMeta[syl[curToneIdx]]!!
-                syl[curToneIdx] = applyToneToBase(meta.base, Tone.NONE)
-                return Triple(syl, true, false)
+                if (curTone != Tone.NONE) {
+                    val meta = runeToMeta[syl[curToneIdx]]!!
+                    syl[curToneIdx] = applyToneToBase(meta.base, Tone.NONE)
+                    return Triple(syl, true, false)
+                }
+                var stripped = false
+                for (i in syl.indices) {
+                    val r = syl[i]
+                    if (r == 'đ') {
+                        syl[i] = 'd'
+                        stripped = true
+                    } else if (r == 'Đ') {
+                        syl[i] = 'D'
+                        stripped = true
+                    } else {
+                        val meta = runeToMeta[r]
+                        if (meta != null && meta.base.lowercaseChar() != meta.ascii) {
+                            syl[i] = changeVowelShape(r, meta.ascii)
+                            stripped = true
+                        }
+                    }
+                }
+                return if (stripped) Triple(syl, true, false) else Triple(null, false, false)
             }
 
             if (curTone == wantedTone) {
@@ -576,6 +648,19 @@ class VuiKeyEngine(var config: VuiKeyConfig = VuiKeyConfig()) {
             val backspaces = oldSyl.size - common
             val insert = newSyl.subList(common, newSyl.size).joinToString("")
             return Pair(backspaces, insert)
+        }
+
+        fun extractLastSyllableBeforeCursor(textBeforeCursor: String): List<Char>? {
+            if (textBeforeCursor.isEmpty()) return null
+            val end = textBeforeCursor.length
+            var start = end
+            while (start > 0 && textBeforeCursor[start - 1].isLetter()) {
+                start--
+            }
+            val len = end - start
+            if (len == 0 || len > 7) return null
+            if (start > 0 && textBeforeCursor[start - 1].isDigit()) return null
+            return textBeforeCursor.substring(start, end).toList()
         }
 
         private fun isVietnameseVowel(r: Char): Boolean = runeToMeta.containsKey(r)

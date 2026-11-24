@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.echipco.vuikey"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 100
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

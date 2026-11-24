@@ -353,6 +353,72 @@ public final class VuiKeyEngine {
         return (backspaces, insert)
     }
 
+    public static func extractLastSyllableBeforeCursor(_ textBeforeCursor: String) -> [Character]? {
+        let runes = Array(textBeforeCursor)
+        guard !runes.isEmpty else { return nil }
+        let end = runes.count
+        var start = end
+        while start > 0 && runes[start - 1].isLetter {
+            start -= 1
+        }
+        let word = Array(runes[start..<end])
+        if word.isEmpty || word.count > 7 { return nil }
+        if start > 0 && runes[start - 1].isNumber { return nil }
+        return word
+    }
+
+    public func isValidVietnameseSyllableForReedit(_ word: [Character]) -> Bool {
+        if word.isEmpty || word.count > 7 { return false }
+        if config.smartEnglish {
+            let rawLower = String(word).lowercased()
+            if Self.commonEnglishTechWords.contains(rawLower) { return false }
+            for i in 0..<min(word.count, 3) {
+                if Self.isEnglishOnlyPrefix(Array(word[0..<i]), nextCh: word[i]) {
+                    return false
+                }
+            }
+        }
+        let dec = Self.decompose(word)
+        let initLower = Self.lowerBaseString(dec.initial)
+        if !Self.validInitials.contains(initLower) { return false }
+        if dec.vowels.isEmpty {
+            return dec.initial.count == 1 && (initLower == "d" || initLower == "đ") && dec.final.isEmpty
+        }
+        if dec.vowels.count > 3 { return false }
+        let finalLower = Self.lowerASCIIString(dec.final)
+        if !Self.validFinals.contains(finalLower) { return false }
+        if !dec.final.isEmpty {
+            let vBase = Self.lowerBaseString(dec.vowels)
+            if Self.closedVowelNuclei.contains(vBase) { return false }
+        }
+        return true
+    }
+
+    public func tryModifySurroundingWord(_ textBeforeCursor: String, ch: Character) -> VuiKeyAction? {
+        guard config.enabled && syllable.isEmpty else { return nil }
+        if !ch.isLetter && !ch.isNumber { return nil }
+        if ch.isNumber && config.mode == .telex { return nil }
+        guard let word = Self.extractLastSyllableBeforeCursor(textBeforeCursor),
+              isValidVietnameseSyllableForReedit(word) else { return nil }
+        let dec = Self.decompose(word)
+        guard Self.isModifierForSyllable(dec, ch: ch, mode: config.mode) else { return nil }
+
+        let savedRaw = rawHistory
+        let savedDelayedD = delayedD
+        rawHistory = word + [ch]
+        let (newSyl, transformed, undone) = tryTransform(word, ch: ch)
+        rawHistory = savedRaw
+        delayedD = savedDelayedD
+
+        guard transformed, let newSyl = newSyl, !newSyl.isEmpty, !undone else { return nil }
+        if config.smartEnglish && Self.checkAutoRestoreEnglish(currentSyl: newSyl, rawHistory: word + [ch]) {
+            return nil
+        }
+        let (bs, ins) = Self.computeMinimalDiff(oldSyl: word, newSyl: newSyl)
+        if bs == 0 && ins.isEmpty { return nil }
+        return VuiKeyAction(swallow: true, backspaces: bs, commitText: ins)
+    }
+
     // MARK: - Phonology Helpers
 
     private struct DecomposedSyllable {
@@ -735,11 +801,22 @@ public final class VuiKeyEngine {
             }
 
             if wantedTone == .none {
-                if curTone == .none { return (nil, false, false) }
-                if let meta = Self.runeToMeta[syl[curToneIdx]] {
-                    syl[curToneIdx] = Self.applyToneToBase(meta.base, tone: .none)
+                if curTone != .none {
+                    if let meta = Self.runeToMeta[syl[curToneIdx]] {
+                        syl[curToneIdx] = Self.applyToneToBase(meta.base, tone: .none)
+                    }
+                    return (syl, true, false)
                 }
-                return (syl, true, false)
+                var stripped = false
+                for (i, r) in syl.enumerated() {
+                    if r == "đ" { syl[i] = "d"; stripped = true }
+                    else if r == "Đ" { syl[i] = "D"; stripped = true }
+                    else if let meta = Self.runeToMeta[r], Character(meta.base.lowercased()) != meta.ascii {
+                        syl[i] = Self.changeVowelShape(r, newLowerBase: meta.ascii)
+                        stripped = true
+                    }
+                }
+                return stripped ? (syl, true, false) : (nil, false, false)
             }
 
             if curTone == wantedTone {
