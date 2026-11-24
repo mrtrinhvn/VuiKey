@@ -132,6 +132,12 @@ public final class VuiKeyMacController: NSObject {
             return Unmanaged.passUnretained(event)
         }
 
+        // Automatically bypass VuiKey when macOS Secure Event Input (password fields) is active
+        if IsSecureEventInputEnabled() {
+            engine.reset()
+            return Unmanaged.passUnretained(event)
+        }
+
         let keyCode = Int(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
 

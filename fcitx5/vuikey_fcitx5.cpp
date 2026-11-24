@@ -94,6 +94,16 @@ private:
         Key key = keyEvent.key();
         Key raw = keyEvent.rawKey();
 
+        // Bypass VuiKey completely in Password or Sensitive input fields!
+        // Because PreInputMethod runs before Fcitx5's built-in password filter, we must check
+        // CapabilityFlag::PasswordOrSensitive here so password boxes never receive ClientPreedit
+        // (which causes tiny preedit dots and unwanted Telex transformations like 'as' -> 'á' in passwords).
+        if (ic->capabilityFlags().testAny(CapabilityFlag::PasswordOrSensitive)) {
+            char *rem = VuiCoreReset();
+            if (rem) free(rem);
+            return;
+        }
+
         // Toggle [VN] / [EN] directly in ~/.config/vuikey/config.json on Ctrl+Space or Super+Space
         if (key.check(Key(FcitxKey_space, KeyState::Ctrl)) ||
             key.check(Key(FcitxKey_space, KeyState::Super))) {

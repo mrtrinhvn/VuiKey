@@ -162,6 +162,22 @@ class VuiKeyInputMethodService : InputMethodService() {
         return main
     }
 
+    private fun isPasswordInputField(): Boolean {
+        val info = currentInputEditorInfo ?: return false
+        val inputType = info.inputType
+        val klass = inputType and android.text.InputType.TYPE_MASK_CLASS
+        val variation = inputType and android.text.InputType.TYPE_MASK_VARIATION
+        if (klass == android.text.InputType.TYPE_CLASS_TEXT) {
+            return variation == android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD ||
+                variation == android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
+                variation == android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
+        }
+        if (klass == android.text.InputType.TYPE_CLASS_NUMBER) {
+            return variation == android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+        }
+        return false
+    }
+
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         engine.config = VuiKeyPreferences.load(this)
@@ -499,6 +515,17 @@ class VuiKeyInputMethodService : InputMethodService() {
 
         val chStr = if (!isSymbolLayer && (isShifted || isCapsLocked)) key.uppercase() else key.lowercase()
         val ch = chStr.firstOrNull() ?: return
+
+        if (isPasswordInputField()) {
+            engine.reset()
+            ic.commitText(ch.toString(), 1)
+            if (isShifted && !isCapsLocked) {
+                isShifted = false
+                rebuildKeyboardRows()
+            }
+            updateTopBar()
+            return
+        }
 
         val act = engine.processKey(ch)
         if (act.swallow) {

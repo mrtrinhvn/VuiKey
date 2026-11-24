@@ -125,6 +125,12 @@ static CGEventRef vuiKeyEventTapCallback(CGEventTapProxy proxy, CGEventType type
 		return event;
 	}
 
+	// Automatically bypass VuiKey in macOS password / Secure Input fields
+	if (IsSecureEventInputEnabled()) {
+		goHandleMacMouseReset();
+		return event;
+	}
+
 	CGKeyCode keyCode = (CGKeyCode)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
 	CGEventFlags flags = CGEventGetFlags(event);
 
