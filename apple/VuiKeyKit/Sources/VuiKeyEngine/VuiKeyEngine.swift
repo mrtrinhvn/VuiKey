@@ -673,15 +673,28 @@ public final class VuiKeyEngine {
         let dec = decompose(syl)
         if dec.vowels.isEmpty { return syl }
 
-        if dec.vowels.count >= 2 && (!dec.final.isEmpty || dec.vowels.count >= 3) {
-            var i = dec.vowelStart
-            while i + 1 < dec.vowelEnd {
+        if dec.vowels.count >= 2 {
+            if !dec.final.isEmpty || dec.vowels.count >= 3 {
+                var i = dec.vowelStart
+                while i + 1 < dec.vowelEnd {
+                    if let m1 = runeToMeta[syl[i]], let m2 = runeToMeta[syl[i + 1]] {
+                        let b1 = m1.base.lowercased()
+                        let b2 = m2.base.lowercased()
+                        if (b1 == "ư" && b2 == "o") || (b1 == "u" && b2 == "ơ") {
+                            syl[i] = changeVowelShape(syl[i], newLowerBase: "ư")
+                            syl[i + 1] = changeVowelShape(syl[i + 1], newLowerBase: "ơ")
+                        }
+                    }
+                    i += 1
+                }
+            } else if dec.vowels.count == 2 && dec.final.isEmpty {
+                let i = dec.vowelStart
                 if let m1 = runeToMeta[syl[i]], let m2 = runeToMeta[syl[i + 1]] {
                     if m1.base.lowercased() == "ư" && m2.base.lowercased() == "o" {
+                        syl[i] = changeVowelShape(syl[i], newLowerBase: "u")
                         syl[i + 1] = changeVowelShape(syl[i + 1], newLowerBase: "ơ")
                     }
                 }
-                i += 1
             }
         }
 
@@ -888,11 +901,11 @@ public final class VuiKeyEngine {
                 }
             }
 
-            if vBase == "ươ" && prevWCount == 1 && !prevWasW {
+            if (vBase == "ươ" || vBase == "uơ") && prevWCount == 1 && !prevWasW {
                 return (syl, true, false)
             }
 
-            if vBase == "ă" || vBase == "ơ" || vBase == "ư" || vBase == "ươ" ||
+            if vBase == "ă" || vBase == "ơ" || vBase == "ư" || vBase == "ươ" || vBase == "uơ" ||
                (prevWasW && vBase.contains(where: { "ăơư".contains($0) })) {
                 for i in dec.vowelStart..<dec.vowelEnd {
                     if let meta = Self.runeToMeta[syl[i]] {
@@ -908,8 +921,13 @@ public final class VuiKeyEngine {
                 while i + 1 < dec.vowelEnd {
                     if let m1 = Self.runeToMeta[syl[i]], let m2 = Self.runeToMeta[syl[i + 1]],
                        m1.ascii == "u" && m2.ascii == "o" {
-                        syl[i] = Self.changeVowelShape(syl[i], newLowerBase: "ư")
-                        syl[i + 1] = Self.changeVowelShape(syl[i + 1], newLowerBase: "ơ")
+                        if !dec.final.isEmpty || dec.vowels.count >= 3 {
+                            syl[i] = Self.changeVowelShape(syl[i], newLowerBase: "ư")
+                            syl[i + 1] = Self.changeVowelShape(syl[i + 1], newLowerBase: "ơ")
+                        } else {
+                            syl[i] = Self.changeVowelShape(syl[i], newLowerBase: "u")
+                            syl[i + 1] = Self.changeVowelShape(syl[i + 1], newLowerBase: "ơ")
+                        }
                         return (Self.rebalanceTone(syl, modernStyle: config.modernToneStyle), true, false)
                     }
                     i += 1

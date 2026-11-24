@@ -157,6 +157,12 @@ func TestComprehensiveVietnameseTypingOrders(t *testing.T) {
 		{"tuoior", "tuổi"},
 		{"huwowu", "hươu"},
 		{"huouw", "hươu"},
+		{"thuowr", "thuở"},
+		{"thuorw", "thuở"},
+		{"thuwor", "thuở"},
+		{"thuwowr", "thuở"},
+		{"Thuowr xuwa", "Thuở xưa"},
+		{"huow tay", "huơ tay"},
 
 		// Capitalized & ALL CAPS Vietnamese
 		{"Vieetj Nam", "Việt Nam"},

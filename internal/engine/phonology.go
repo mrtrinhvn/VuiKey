@@ -405,12 +405,27 @@ func rebalanceTone(syl []rune, modernStyle bool) []rune {
 		return syl
 	}
 
-	// Auto-normalize "ưo" -> "ươ" when followed by a final consonant or 3rd vowel (i/u)
-	if len(dec.vowels) >= 2 && (len(dec.final) > 0 || len(dec.vowels) >= 3) {
-		for i := dec.vowelStart; i+1 < dec.vowelEnd; i++ {
+	// Auto-normalize "ưo" / "uơ" based on syllable structure:
+	// - When followed by a final consonant or 3rd vowel (i/u): always "ươ" (được, trường, người, thương, hươu)
+	// - When in an open 2-vowel syllable (no final consonant, no 3rd vowel): always "uơ" (thuở, huơ, khuơ)
+	if len(dec.vowels) >= 2 {
+		if len(dec.final) > 0 || len(dec.vowels) >= 3 {
+			for i := dec.vowelStart; i+1 < dec.vowelEnd; i++ {
+				m1 := runeToMeta[syl[i]]
+				m2 := runeToMeta[syl[i+1]]
+				b1 := unicode.ToLower(m1.base)
+				b2 := unicode.ToLower(m2.base)
+				if (b1 == 'ư' && b2 == 'o') || (b1 == 'u' && b2 == 'ơ') {
+					syl[i] = changeVowelShape(syl[i], 'ư')
+					syl[i+1] = changeVowelShape(syl[i+1], 'ơ')
+				}
+			}
+		} else if len(dec.vowels) == 2 && len(dec.final) == 0 {
+			i := dec.vowelStart
 			m1 := runeToMeta[syl[i]]
 			m2 := runeToMeta[syl[i+1]]
 			if unicode.ToLower(m1.base) == 'ư' && unicode.ToLower(m2.base) == 'o' {
+				syl[i] = changeVowelShape(syl[i], 'u')
 				syl[i+1] = changeVowelShape(syl[i+1], 'ơ')
 			}
 		}
@@ -651,15 +666,15 @@ func (e *Engine) tryTransform(oldSyl []rune, ch rune) ([]rune, bool, bool) {
 			}
 		}
 
-		// If vBase is ALREADY "ươ" because the user typed "uw" earlier and auto-normalization turned "ưo" -> "ươ",
-		// and the user now presses a second 'w' (not immediately after the first 'w', e.g. dduwocwj or truwongwf),
-		// treat this second 'w' as confirming "ươ" (swallow with no change) rather than undoing "ươ"!
-		if vBase == "ươ" && prevWCount == 1 && !prevWasW {
+		// If vBase is ALREADY "ươ" or "uơ" because the user typed "uw" earlier and auto-normalization turned "ưo" -> "ươ"/"uơ",
+		// and the user now presses a second 'w' (not immediately after the first 'w', e.g. dduwocwj, truwongwf, thuwowr),
+		// treat this second 'w' as confirming "ươ"/"uơ" (swallow with no change) rather than undoing it!
+		if (vBase == "ươ" || vBase == "uơ") && prevWCount == 1 && !prevWasW {
 			return syl, true, false
 		}
 
 		// Undo if already has horn/breve and user pressed 'w' again immediately (or after already finished)
-		if vBase == "ă" || vBase == "ơ" || vBase == "ư" || vBase == "ươ" ||
+		if vBase == "ă" || vBase == "ơ" || vBase == "ư" || vBase == "ươ" || vBase == "uơ" ||
 			(prevWasW && (strings.ContainsRune(vBase, 'ă') || strings.ContainsRune(vBase, 'ơ') || strings.ContainsRune(vBase, 'ư'))) {
 			for i := dec.vowelStart; i < dec.vowelEnd; i++ {
 				meta := runeToMeta[syl[i]]
@@ -669,15 +684,20 @@ func (e *Engine) tryTransform(oldSyl []rune, ch rune) ([]rune, bool, bool) {
 			return syl, true, true
 		}
 
-		// Special pair "uo" / "uô" / "ưo" -> "ươ" (e.g., "truong" + "w" -> "trương", "huou" + "w" -> "hươu")
+		// Special pair "uo" -> "ươ" when followed by a final consonant or 3rd vowel (e.g., "truong" + "w" -> "trương", "huou" + "w" -> "hươu"),
+		// or "uo" -> "uơ" in an open 2-vowel syllable (e.g., "thuo" + "w" + "r" -> "thuở", "huo" + "w" -> "huơ")!
 		if strings.Contains(vASC, "uo") && lc != '8' {
 			for i := dec.vowelStart; i+1 < dec.vowelEnd; i++ {
 				m1 := runeToMeta[syl[i]]
 				m2 := runeToMeta[syl[i+1]]
 				if m1.ascii == 'u' && m2.ascii == 'o' {
-					// Exception: "qu" where 'u' was not decomposed as initial (already handled by decompose)
-					syl[i] = changeVowelShape(syl[i], 'ư')
-					syl[i+1] = changeVowelShape(syl[i+1], 'ơ')
+					if len(dec.final) > 0 || len(dec.vowels) >= 3 {
+						syl[i] = changeVowelShape(syl[i], 'ư')
+						syl[i+1] = changeVowelShape(syl[i+1], 'ơ')
+					} else {
+						syl[i] = changeVowelShape(syl[i], 'u')
+						syl[i+1] = changeVowelShape(syl[i+1], 'ơ')
+					}
 					return rebalanceTone(syl, e.Cfg.ModernToneStyle), true, false
 				}
 			}

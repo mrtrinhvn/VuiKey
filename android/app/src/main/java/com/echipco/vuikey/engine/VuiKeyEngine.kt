@@ -454,11 +454,11 @@ class VuiKeyEngine(var config: VuiKeyConfig = VuiKeyConfig()) {
                 }
             }
 
-            if (vBase == "ươ" && prevWCount == 1 && !prevWasW) {
+            if ((vBase == "ươ" || vBase == "uơ") && prevWCount == 1 && !prevWasW) {
                 return Triple(syl, true, false)
             }
 
-            if (vBase == "ă" || vBase == "ơ" || vBase == "ư" || vBase == "ươ" ||
+            if (vBase == "ă" || vBase == "ơ" || vBase == "ư" || vBase == "ươ" || vBase == "uơ" ||
                 (prevWasW && (vBase.contains('ă') || vBase.contains('ơ') || vBase.contains('ư')))
             ) {
                 for (i in dec.vowelStart until dec.vowelEnd) {
@@ -474,8 +474,13 @@ class VuiKeyEngine(var config: VuiKeyConfig = VuiKeyConfig()) {
                     val m1 = runeToMeta[syl[i]] ?: continue
                     val m2 = runeToMeta[syl[i + 1]] ?: continue
                     if (m1.ascii == 'u' && m2.ascii == 'o') {
-                        syl[i] = changeVowelShape(syl[i], 'ư')
-                        syl[i + 1] = changeVowelShape(syl[i + 1], 'ơ')
+                        if (dec.finalConsonants.isNotEmpty() || dec.vowels.size >= 3) {
+                            syl[i] = changeVowelShape(syl[i], 'ư')
+                            syl[i + 1] = changeVowelShape(syl[i + 1], 'ơ')
+                        } else {
+                            syl[i] = changeVowelShape(syl[i], 'u')
+                            syl[i + 1] = changeVowelShape(syl[i + 1], 'ơ')
+                        }
                         return Triple(rebalanceTone(syl, config.modernToneStyle), true, false)
                     }
                 }
@@ -872,11 +877,24 @@ class VuiKeyEngine(var config: VuiKeyConfig = VuiKeyConfig()) {
             val dec = decompose(syl)
             if (dec.vowels.isEmpty()) return syl
 
-            if (dec.vowels.size >= 2 && (dec.finalConsonants.isNotEmpty() || dec.vowels.size >= 3)) {
-                for (i in dec.vowelStart until (dec.vowelEnd - 1)) {
-                    val m1 = runeToMeta[syl[i]] ?: continue
-                    val m2 = runeToMeta[syl[i + 1]] ?: continue
-                    if (m1.base.lowercaseChar() == 'ư' && m2.base.lowercaseChar() == 'o') {
+            if (dec.vowels.size >= 2) {
+                if (dec.finalConsonants.isNotEmpty() || dec.vowels.size >= 3) {
+                    for (i in dec.vowelStart until (dec.vowelEnd - 1)) {
+                        val m1 = runeToMeta[syl[i]] ?: continue
+                        val m2 = runeToMeta[syl[i + 1]] ?: continue
+                        val b1 = m1.base.lowercaseChar()
+                        val b2 = m2.base.lowercaseChar()
+                        if ((b1 == 'ư' && b2 == 'o') || (b1 == 'u' && b2 == 'ơ')) {
+                            syl[i] = changeVowelShape(syl[i], 'ư')
+                            syl[i + 1] = changeVowelShape(syl[i + 1], 'ơ')
+                        }
+                    }
+                } else if (dec.vowels.size == 2 && dec.finalConsonants.isEmpty()) {
+                    val i = dec.vowelStart
+                    val m1 = runeToMeta[syl[i]]
+                    val m2 = runeToMeta[syl[i + 1]]
+                    if (m1 != null && m2 != null && m1.base.lowercaseChar() == 'ư' && m2.base.lowercaseChar() == 'o') {
+                        syl[i] = changeVowelShape(syl[i], 'u')
                         syl[i + 1] = changeVowelShape(syl[i + 1], 'ơ')
                     }
                 }
