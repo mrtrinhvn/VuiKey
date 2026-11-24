@@ -748,9 +748,33 @@ func lowLevelKeyboardProc(nCode int, wParam uintptr, lParam uintptr) uintptr {
 			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
 			return ret
 
-		case VK_DELETE, VK_RETURN, VK_TAB, VK_ESCAPE,
-			VK_LEFT, VK_RIGHT, VK_UP, VK_DOWN, VK_HOME, VK_END, VK_PRIOR, VK_NEXT:
-			eng.HandleDelete()
+		case VK_LEFT:
+			eng.HandleNavigation(1)
+			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
+			return ret
+
+		case VK_RIGHT:
+			eng.HandleNavigation(2)
+			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
+			return ret
+
+		case VK_HOME:
+			eng.HandleNavigation(3)
+			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
+			return ret
+
+		case VK_END:
+			eng.HandleNavigation(4)
+			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
+			return ret
+
+		case VK_DELETE:
+			eng.HandleNavigation(5)
+			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
+			return ret
+
+		case VK_RETURN, VK_TAB, VK_ESCAPE, VK_UP, VK_DOWN, VK_PRIOR, VK_NEXT:
+			eng.HandleNavigation(0)
 			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
 			return ret
 
@@ -759,7 +783,6 @@ func lowLevelKeyboardProc(nCode int, wParam uintptr, lParam uintptr) uintptr {
 				sendUnicodeReplacement(act.Backspaces, act.CommitText+" ")
 				return 1
 			}
-			eng.Reset()
 			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
 			return ret
 		}

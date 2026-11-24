@@ -277,6 +277,7 @@ func (e *Engine) HandleBackspace() {
 	if len(e.syllable) > 0 {
 		e.syllable = e.syllable[:len(e.syllable)-1]
 	}
+	e.RecordCommittedBackspace(1)
 	// Always unseal the word on BackSpace so the user never has to delete all the way to the first letter!
 	e.wordSealed = false
 	e.lastUndoKey = 0
@@ -284,21 +285,44 @@ func (e *Engine) HandleBackspace() {
 	e.rawHistory = append([]rune(nil), e.syllable...)
 }
 
-// HandleDelete handles hardware Delete key: simply resets syllable state without emitting anything!
+// HandleDelete handles hardware Delete key: resets syllable state and deletes 1 char at cursor in fallback line buffer.
 func (e *Engine) HandleDelete() {
 	e.Reset()
+	e.RecordCommittedDelete()
+}
+
+// HandleNavigation updates the fallback line cursor on Left(1), Right(2), Home(3), End(4), Delete(5), or Clear(0).
+func (e *Engine) HandleNavigation(navType int) {
+	e.Reset()
+	switch navType {
+	case 1:
+		e.MoveCommittedCursor(-1)
+	case 2:
+		e.MoveCommittedCursor(1)
+	case 3:
+		e.MoveCommittedCursor(-999)
+	case 4:
+		e.MoveCommittedCursor(999)
+	case 5:
+		e.RecordCommittedDelete()
+	default:
+		e.ClearCommittedLine()
+	}
 }
 
 // CheckMacroOnSpace checks if the word just completed before Space matches a configured macro.
 func (e *Engine) CheckMacroOnSpace() (Action, bool) {
 	if !e.Cfg.Enabled || !e.Cfg.EnableMacros || len(e.syllable) == 0 {
 		e.Reset()
+		e.RecordCommittedText(" ")
 		return Action{}, false
 	}
 	word := string(e.syllable)
 	if replacement, ok := e.Cfg.Macros[word]; ok && replacement != "" {
 		bs := len(e.syllable)
 		e.Reset()
+		e.RecordCommittedBackspace(bs)
+		e.RecordCommittedText(replacement + " ")
 		return Action{
 			Swallow:    false, // Let space happen or include space
 			Backspaces: bs,
@@ -306,6 +330,7 @@ func (e *Engine) CheckMacroOnSpace() (Action, bool) {
 		}, true
 	}
 	e.Reset()
+	e.RecordCommittedText(" ")
 	return Action{}, false
 }
 
@@ -342,6 +367,19 @@ func (e *Engine) wouldTransform(ch rune) bool {
 // If Action.Swallow is false, the caller lets the key pass straight through to the app (or commits `string(ch)`).
 // If Action.Swallow is true, the caller intercepts the key, sends Action.Backspaces Backspaces, and injects Action.CommitText.
 func (e *Engine) ProcessKey(ch rune) Action {
+	act := e.processKeyInternal(ch)
+	if e.Cfg.Enabled {
+		if act.Swallow {
+			e.RecordCommittedBackspace(act.Backspaces)
+			e.RecordCommittedText(act.CommitText)
+		} else {
+			e.RecordCommittedText(string(ch))
+		}
+	}
+	return act
+}
+
+func (e *Engine) processKeyInternal(ch rune) Action {
 	if !e.Cfg.Enabled {
 		return Action{Swallow: false}
 	}
@@ -356,6 +394,16 @@ func (e *Engine) ProcessKey(ch rune) Action {
 	if unicode.IsDigit(ch) && e.Cfg.Mode == ModeTelex {
 		e.Reset()
 		return Action{Swallow: false}
+	}
+
+	// If active syllable is empty (e.g. cursor was moved via Left/Right/Home/End/Backspace to the end of a word),
+	// check if `ch` is a tone/diacritic modifier that validly transforms the word before the cursor!
+	if len(e.syllable) == 0 {
+		if tb := e.CommittedTextBeforeCursor(); tb != "" {
+			if surAct, ok := e.TryModifySurroundingWord(tb, ch); ok && surAct.Swallow {
+				return surAct
+			}
+		}
 	}
 
 	e.rawHistory = append(e.rawHistory, ch)

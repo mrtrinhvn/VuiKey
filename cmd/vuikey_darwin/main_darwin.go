@@ -444,7 +444,13 @@ func goHandleMacKey(keyCode C.int, flags C.uint, uniChar C.uint) C.int {
 		eng.HandleBackspace()
 		return 0
 	case kVK_ForwardDelete: // Delete
-		eng.HandleDelete()
+		eng.HandleNavigation(5)
+		return 0
+	case kVK_LeftArrow:
+		eng.HandleNavigation(1)
+		return 0
+	case kVK_RightArrow:
+		eng.HandleNavigation(2)
 		return 0
 	case kVK_Space:
 		if act, ok := eng.CheckMacroOnSpace(); ok {
@@ -454,8 +460,8 @@ func goHandleMacKey(keyCode C.int, flags C.uint, uniChar C.uint) C.int {
 			return 1
 		}
 		return 0
-	case kVK_Return, kVK_Tab, kVK_Escape, kVK_LeftArrow, kVK_RightArrow, kVK_UpArrow, kVK_DownArrow:
-		eng.Reset()
+	case kVK_Return, kVK_Tab, kVK_Escape, kVK_UpArrow, kVK_DownArrow:
+		eng.HandleNavigation(0)
 		return 0
 	}
 
