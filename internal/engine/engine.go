@@ -160,20 +160,101 @@ type Action struct {
 
 // Engine implements VuiKey's Zero-Preedit + Sliding Syllable Window state machine.
 type Engine struct {
-	Cfg         Config
-	syllable    []rune // Currently active syllable displayed on screen
-	rawHistory  []rune // Raw keys typed for the current word
-	wordSealed  bool   // True if the user undid a double-key or word is non-Vietnamese English
-	lastUndoKey rune   // Key that just triggered an undo
-	delayedD    bool   // True if the immediately preceding keystroke applied a delayed 'd' -> 'đ'
+	Cfg             Config
+	syllable        []rune // Currently active syllable displayed on screen
+	rawHistory      []rune // Raw keys typed for the current word
+	wordSealed      bool   // True if the user undid a double-key or word is non-Vietnamese English
+	lastUndoKey     rune   // Key that just triggered an undo
+	delayedD        bool   // True if the immediately preceding keystroke applied a delayed 'd' -> 'đ'
+	committedLine   []rune // Lightweight current-line committed text fallback for apps without SurroundingText (e.g. Chromium/Electron on Linux)
+	committedCursor int    // Cursor index within committedLine
 }
 
 func NewEngine(cfg Config) *Engine {
 	return &Engine{
-		Cfg:        cfg,
-		syllable:   make([]rune, 0, 16),
-		rawHistory: make([]rune, 0, 16),
+		Cfg:           cfg,
+		syllable:      make([]rune, 0, 16),
+		rawHistory:    make([]rune, 0, 16),
+		committedLine: make([]rune, 0, 128),
 	}
+}
+
+// ClearCommittedLine clears the fallback committed line buffer (called on Enter, Tab, Esc, Up/Down, FocusOut).
+func (e *Engine) ClearCommittedLine() {
+	e.committedLine = e.committedLine[:0]
+	e.committedCursor = 0
+}
+
+// RecordCommittedText inserts committed text at the current cursor position in the fallback line buffer.
+func (e *Engine) RecordCommittedText(text string) {
+	if text == "" {
+		return
+	}
+	r := []rune(text)
+	if e.committedCursor < 0 {
+		e.committedCursor = 0
+	}
+	if e.committedCursor > len(e.committedLine) {
+		e.committedCursor = len(e.committedLine)
+	}
+	tail := append([]rune(nil), e.committedLine[e.committedCursor:]...)
+	e.committedLine = append(append(e.committedLine[:e.committedCursor], r...), tail...)
+	e.committedCursor += len(r)
+	if len(e.committedLine) > 256 {
+		drop := len(e.committedLine) - 256
+		e.committedLine = e.committedLine[drop:]
+		e.committedCursor -= drop
+		if e.committedCursor < 0 {
+			e.committedCursor = 0
+		}
+	}
+}
+
+// RecordCommittedBackspace deletes `count` runes before the cursor in the fallback line buffer.
+func (e *Engine) RecordCommittedBackspace(count int) {
+	for i := 0; i < count; i++ {
+		if e.committedCursor > 0 && e.committedCursor <= len(e.committedLine) {
+			e.committedLine = append(e.committedLine[:e.committedCursor-1], e.committedLine[e.committedCursor:]...)
+			e.committedCursor--
+		}
+	}
+}
+
+// RecordCommittedDelete deletes 1 rune at the cursor in the fallback line buffer.
+func (e *Engine) RecordCommittedDelete() {
+	if e.committedCursor >= 0 && e.committedCursor < len(e.committedLine) {
+		e.committedLine = append(e.committedLine[:e.committedCursor], e.committedLine[e.committedCursor+1:]...)
+	}
+}
+
+// MoveCommittedCursor moves the cursor within the fallback line buffer (-1 = Left, +1 = Right, -999 = Home, +999 = End).
+func (e *Engine) MoveCommittedCursor(delta int) {
+	switch {
+	case delta <= -999:
+		e.committedCursor = 0
+	case delta >= 999:
+		e.committedCursor = len(e.committedLine)
+	default:
+		e.committedCursor += delta
+		if e.committedCursor < 0 {
+			e.committedCursor = 0
+		}
+		if e.committedCursor > len(e.committedLine) {
+			e.committedCursor = len(e.committedLine)
+		}
+	}
+}
+
+// CommittedTextBeforeCursor returns the committed text up to the cursor if the cursor is at the end of a word.
+func (e *Engine) CommittedTextBeforeCursor() string {
+	if e.committedCursor <= 0 || e.committedCursor > len(e.committedLine) {
+		return ""
+	}
+	// Only allow re-editing if the cursor is at the end of a word (not in the middle of letters)
+	if e.committedCursor < len(e.committedLine) && unicode.IsLetter(e.committedLine[e.committedCursor]) {
+		return ""
+	}
+	return string(e.committedLine[:e.committedCursor])
 }
 
 // Reset clears the syllable state (called on Space, Enter, Delete, Arrow keys, Mouse click, Focus change).
@@ -507,9 +588,11 @@ func (e *Engine) ProcessKeyForIME(ch rune) (commitPrefix string, currentPreedit 
 		if len(e.syllable) > 0 {
 			out := string(e.syllable) + string(ch)
 			e.Reset()
+			e.RecordCommittedText(out)
 			return out, "", true
 		}
 		e.Reset()
+		e.RecordCommittedText(string(ch))
 		return "", "", false
 	}
 
@@ -518,9 +601,11 @@ func (e *Engine) ProcessKeyForIME(ch rune) (commitPrefix string, currentPreedit 
 		if len(e.syllable) > 0 {
 			out := string(e.syllable) + string(ch)
 			e.Reset()
+			e.RecordCommittedText(out)
 			return out, "", true
 		}
 		e.Reset()
+		e.RecordCommittedText(string(ch))
 		return "", "", false
 	}
 
@@ -553,6 +638,7 @@ func (e *Engine) ProcessKeyForIME(ch rune) (commitPrefix string, currentPreedit 
 				prevD = 'D'
 			}
 			finished := string(e.syllable)
+			e.RecordCommittedText(finished)
 			e.syllable = []rune{prevD, ch}
 			e.rawHistory = []rune{prevD, ch}
 			e.delayedD = false
@@ -566,6 +652,7 @@ func (e *Engine) ProcessKeyForIME(ch rune) (commitPrefix string, currentPreedit 
 	// (e.g. nhacdidangnhactieng...), immediately commit the finished syllable and start a fresh 1-char syllable!
 	if e.Cfg.SyllableSplit && shouldSplitNewSyllable(e.syllable, ch, e.Cfg.Mode) {
 		finished := string(e.syllable)
+		e.RecordCommittedText(finished)
 		e.syllable = []rune{ch}
 		e.rawHistory = []rune{ch}
 		e.lastUndoKey = 0

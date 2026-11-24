@@ -76,12 +76,39 @@ func VuiCoreHandleBackspace(outHandled *C.int) *C.char {
 	mu.Lock()
 	defer mu.Unlock()
 	if len(globalE.CurrentSyllable()) == 0 {
+		globalE.RecordCommittedBackspace(1)
 		*outHandled = 0
 		return C.CString("")
 	}
 	globalE.HandleBackspace()
 	*outHandled = 1
 	return C.CString(globalE.CurrentSyllable())
+}
+
+//export VuiCoreRecordNavigation
+func VuiCoreRecordNavigation(navType C.int) *C.char {
+	mu.Lock()
+	defer mu.Unlock()
+	syl := globalE.CurrentSyllable()
+	globalE.Reset()
+	if syl != "" {
+		globalE.RecordCommittedText(syl)
+	}
+	switch int(navType) {
+	case 1: // Left
+		globalE.MoveCommittedCursor(-1)
+	case 2: // Right
+		globalE.MoveCommittedCursor(1)
+	case 3: // Home
+		globalE.MoveCommittedCursor(-999)
+	case 4: // End
+		globalE.MoveCommittedCursor(999)
+	case 5: // Delete
+		globalE.RecordCommittedDelete()
+	default: // Enter, Tab, Escape, Up, Down, FocusOut
+		globalE.ClearCommittedLine()
+	}
+	return C.CString(syl)
 }
 
 //export VuiCoreProcessKey
@@ -137,25 +164,35 @@ func VuiCoreTryModifySurrounding(cText *C.char, cursorCharPos C.uint, ch C.uint,
 	mu.Lock()
 	defer mu.Unlock()
 	syncConfigLocked()
-	if cText == nil || len(globalE.CurrentSyllable()) > 0 {
+	if len(globalE.CurrentSyllable()) > 0 {
 		*outBackspaces = 0
 		*outCommit = nil
 		return 0
 	}
-	fullRunes := []rune(C.GoString(cText))
-	pos := int(cursorCharPos)
-	if pos <= 0 || pos > len(fullRunes) {
+	var textBefore string
+	if cText != nil && cursorCharPos > 0 {
+		fullRunes := []rune(C.GoString(cText))
+		pos := int(cursorCharPos)
+		if pos > 0 && pos <= len(fullRunes) {
+			textBefore = string(fullRunes[:pos])
+		}
+	}
+	if textBefore == "" {
+		textBefore = globalE.CommittedTextBeforeCursor()
+	}
+	if textBefore == "" {
 		*outBackspaces = 0
 		*outCommit = nil
 		return 0
 	}
-	textBefore := string(fullRunes[:pos])
 	act, ok := globalE.TryModifySurroundingWord(textBefore, rune(ch))
 	if !ok || !act.Swallow {
 		*outBackspaces = 0
 		*outCommit = nil
 		return 0
 	}
+	globalE.RecordCommittedBackspace(act.Backspaces)
+	globalE.RecordCommittedText(act.CommitText)
 	*outBackspaces = C.int(act.Backspaces)
 	*outCommit = C.CString(act.CommitText)
 	return 1

@@ -50,7 +50,7 @@ g++ -shared -fPIC -O2 -std=c++17 \
     $INC_FLAGS \
     fcitx5/vuikey_fcitx5.cpp \
     build/libvuikey_core.a \
-    $(pkg-config --libs Fcitx5Core Fcitx5Config Fcitx5Utils 2>/dev/null || echo "/usr/lib/x86_64-linux-gnu/libFcitx5Core.so.7 /usr/lib/x86_64-linux-gnu/libFcitx5Config.so.6 /usr/lib/x86_64-linux-gnu/libFcitx5Utils.so.2") \
+    $(pkg-config --libs Fcitx5Core Fcitx5Config Fcitx5Utils x11 xtst 2>/dev/null || echo "/usr/lib/x86_64-linux-gnu/libFcitx5Core.so.7 /usr/lib/x86_64-linux-gnu/libFcitx5Config.so.6 /usr/lib/x86_64-linux-gnu/libFcitx5Utils.so.2 -lX11 -lXtst") \
     -lpthread -ldl \
     -o ~/.local/lib/fcitx5/libvuikey-fcitx5.so
 
