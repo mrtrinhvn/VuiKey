@@ -46,51 +46,6 @@ static int isFrontmostAutocompleteApp(void) {
 	}
 }
 
-// Queries macOS Accessibility API for up to 12 characters right before the cursor in the focused UI element.
-// Caller must free() the returned char* if non-NULL.
-static char* macGetTextBeforeCursor(void) {
-	@autoreleasepool {
-		AXUIElementRef sysWide = AXUIElementCreateSystemWide();
-		AXUIElementRef focused = NULL;
-		if (AXUIElementCopyAttributeValue(sysWide, kAXFocusedUIElementAttribute, (CFTypeRef *)&focused) != kAXErrorSuccess || !focused) {
-			CFRelease(sysWide);
-			return NULL;
-		}
-		CFTypeRef rangeRef = NULL;
-		if (AXUIElementCopyAttributeValue(focused, kAXSelectedTextRangeAttribute, &rangeRef) != kAXErrorSuccess || !rangeRef) {
-			CFRelease(focused);
-			CFRelease(sysWide);
-			return NULL;
-		}
-		CFRange selRange = {0, 0};
-		if (!AXValueGetValue((AXValueRef)rangeRef, kAXValueCFRangeType, &selRange) || selRange.location <= 0 || selRange.length > 0) {
-			CFRelease(rangeRef);
-			CFRelease(focused);
-			CFRelease(sysWide);
-			return NULL;
-		}
-		CFRelease(rangeRef);
-
-		CFIndex startLoc = selRange.location > 12 ? (selRange.location - 12) : 0;
-		CFRange queryRange = CFRangeMake(startLoc, selRange.location - startLoc);
-		AXValueRef queryRangeVal = AXValueCreate(kAXValueCFRangeType, &queryRange);
-		CFTypeRef subStrRef = NULL;
-		char *result = NULL;
-		if (AXUIElementCopyParameterizedAttributeValue(focused, kAXStringForRangeParameterizedAttribute, queryRangeVal, &subStrRef) == kAXErrorSuccess && subStrRef) {
-			if (CFGetTypeID(subStrRef) == CFStringGetTypeID()) {
-				NSString *ns = (__bridge NSString *)subStrRef;
-				const char *utf8 = [ns UTF8String];
-				if (utf8) result = strdup(utf8);
-			}
-			CFRelease(subStrRef);
-		}
-		CFRelease(queryRangeVal);
-		CFRelease(focused);
-		CFRelease(sysWide);
-		return result;
-	}
-}
-
 static void macSendBackspacesAndText(int backspaces, const char *utf8Text) {
 	@autoreleasepool {
 		CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStatePrivate);
@@ -444,13 +399,7 @@ func goHandleMacKey(keyCode C.int, flags C.uint, uniChar C.uint) C.int {
 		eng.HandleBackspace()
 		return 0
 	case kVK_ForwardDelete: // Delete
-		eng.HandleNavigation(5)
-		return 0
-	case kVK_LeftArrow:
-		eng.HandleNavigation(1)
-		return 0
-	case kVK_RightArrow:
-		eng.HandleNavigation(2)
+		eng.HandleDelete()
 		return 0
 	case kVK_Space:
 		if act, ok := eng.CheckMacroOnSpace(); ok {
@@ -460,28 +409,13 @@ func goHandleMacKey(keyCode C.int, flags C.uint, uniChar C.uint) C.int {
 			return 1
 		}
 		return 0
-	case kVK_Return, kVK_Tab, kVK_Escape, kVK_UpArrow, kVK_DownArrow:
-		eng.HandleNavigation(0)
+	case kVK_Return, kVK_Tab, kVK_Escape, kVK_LeftArrow, kVK_RightArrow, kVK_UpArrow, kVK_DownArrow:
+		eng.Reset()
 		return 0
 	}
 
 	if uniChar == 0 {
 		return 0
-	}
-
-	// If active syllable is empty (user just moved cursor to the end of an existing word),
-	// check if `uniChar` is a tone/diacritic key that validly modifies the word right before the cursor!
-	if len(eng.CurrentSyllable()) == 0 {
-		if cBefore := C.macGetTextBeforeCursor(); cBefore != nil {
-			beforeStr := C.GoString(cBefore)
-			C.free(unsafe.Pointer(cBefore))
-			if surAct, ok := eng.TryModifySurroundingWord(beforeStr, rune(uniChar)); ok && surAct.Swallow {
-				cstr := C.CString(surAct.CommitText)
-				C.macSendBackspacesAndText(C.int(surAct.Backspaces), cstr)
-				C.free(unsafe.Pointer(cstr))
-				return 1
-			}
-		}
 	}
 
 	act := eng.ProcessKey(rune(uniChar))

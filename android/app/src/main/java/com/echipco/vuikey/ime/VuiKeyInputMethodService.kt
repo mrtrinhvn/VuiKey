@@ -257,20 +257,6 @@ class VuiKeyInputMethodService : InputMethodService() {
                 engine.reset()
                 return super.onKeyDown(keyCode, event)
             }
-            if (engine.currentSyllable.isEmpty()) {
-                val before = ic.getTextBeforeCursor(12, 0)?.toString() ?: ""
-                val surAct = engine.tryModifySurroundingWord(before, ch)
-                if (surAct != null && surAct.swallow) {
-                    ic.beginBatchEdit()
-                    if (surAct.backspaces > 0) {
-                        ic.deleteSurroundingText(surAct.backspaces, 0)
-                    }
-                    ic.commitText(surAct.commitText, 1)
-                    ic.endBatchEdit()
-                    updateTopBar()
-                    return true
-                }
-            }
             val act = engine.processKey(ch)
             if (act.swallow) {
                 ic.beginBatchEdit()
@@ -543,27 +529,6 @@ class VuiKeyInputMethodService : InputMethodService() {
             }
             updateTopBar()
             return
-        }
-
-        // If active syllable is empty (e.g. cursor just moved to the end of an existing word),
-        // check if `ch` is a tone/diacritic key that validly modifies the word right before the cursor!
-        if (engine.currentSyllable.isEmpty()) {
-            val before = ic.getTextBeforeCursor(12, 0)?.toString() ?: ""
-            val surAct = engine.tryModifySurroundingWord(before, ch)
-            if (surAct != null && surAct.swallow) {
-                ic.beginBatchEdit()
-                if (surAct.backspaces > 0) {
-                    ic.deleteSurroundingText(surAct.backspaces, 0)
-                }
-                ic.commitText(surAct.commitText, 1)
-                ic.endBatchEdit()
-                if (isShifted && !isCapsLocked) {
-                    isShifted = false
-                    rebuildKeyboardRows()
-                }
-                updateTopBar()
-                return
-            }
         }
 
         val act = engine.processKey(ch)

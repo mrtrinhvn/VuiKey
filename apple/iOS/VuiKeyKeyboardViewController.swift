@@ -265,22 +265,6 @@ public final class VuiKeyKeyboardViewController: UIInputViewController {
         let charStr = (!isNumberLayer && (isShifted || isCapsLocked)) ? key.uppercased() : key.lowercased()
         guard let ch = charStr.first else { return }
 
-        if engine.currentSyllable.isEmpty,
-           let before = textDocumentProxy.documentContextBeforeInput,
-           let surAct = engine.tryModifySurroundingWord(before, ch: ch),
-           surAct.swallow {
-            for _ in 0..<surAct.backspaces {
-                textDocumentProxy.deleteBackward()
-            }
-            textDocumentProxy.insertText(surAct.commitText)
-            if isShifted && !isCapsLocked {
-                isShifted = false
-                rebuildKeys()
-            }
-            updateTopBar()
-            return
-        }
-
         let act = engine.processKey(ch)
         if act.swallow {
             for _ in 0..<act.backspaces {

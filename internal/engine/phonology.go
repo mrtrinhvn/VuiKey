@@ -559,12 +559,11 @@ func (e *Engine) tryTransform(oldSyl []rune, ch rune) ([]rune, bool, bool) {
 	}
 
 	if isToneKey {
-		// Check current tone on syllable
+		// Check current tone on syllable (including initial "gi"/"qu" in case a tone was placed on 'i'/'u')
 		curTone := ToneNone
 		curToneIdx := -1
-		for i := dec.vowelStart; i < dec.vowelEnd; i++ {
-			meta := runeToMeta[syl[i]]
-			if meta.tone != ToneNone {
+		for i := 0; i < dec.vowelEnd; i++ {
+			if meta, ok := runeToMeta[syl[i]]; ok && meta.tone != ToneNone {
 				curTone = meta.tone
 				curToneIdx = i
 				break

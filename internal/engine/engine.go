@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"strings"
 	"unicode"
 )
 
@@ -160,101 +159,20 @@ type Action struct {
 
 // Engine implements VuiKey's Zero-Preedit + Sliding Syllable Window state machine.
 type Engine struct {
-	Cfg             Config
-	syllable        []rune // Currently active syllable displayed on screen
-	rawHistory      []rune // Raw keys typed for the current word
-	wordSealed      bool   // True if the user undid a double-key or word is non-Vietnamese English
-	lastUndoKey     rune   // Key that just triggered an undo
-	delayedD        bool   // True if the immediately preceding keystroke applied a delayed 'd' -> 'đ'
-	committedLine   []rune // Lightweight current-line committed text fallback for apps without SurroundingText (e.g. Chromium/Electron on Linux)
-	committedCursor int    // Cursor index within committedLine
+	Cfg         Config
+	syllable    []rune // Currently active syllable displayed on screen
+	rawHistory  []rune // Raw keys typed for the current word
+	wordSealed  bool   // True if the user undid a double-key or word is non-Vietnamese English
+	lastUndoKey rune   // Key that just triggered an undo
+	delayedD    bool   // True if the immediately preceding keystroke applied a delayed 'd' -> 'đ'
 }
 
 func NewEngine(cfg Config) *Engine {
 	return &Engine{
-		Cfg:           cfg,
-		syllable:      make([]rune, 0, 16),
-		rawHistory:    make([]rune, 0, 16),
-		committedLine: make([]rune, 0, 128),
+		Cfg:        cfg,
+		syllable:   make([]rune, 0, 16),
+		rawHistory: make([]rune, 0, 16),
 	}
-}
-
-// ClearCommittedLine clears the fallback committed line buffer (called on Enter, Tab, Esc, Up/Down, FocusOut).
-func (e *Engine) ClearCommittedLine() {
-	e.committedLine = e.committedLine[:0]
-	e.committedCursor = 0
-}
-
-// RecordCommittedText inserts committed text at the current cursor position in the fallback line buffer.
-func (e *Engine) RecordCommittedText(text string) {
-	if text == "" {
-		return
-	}
-	r := []rune(text)
-	if e.committedCursor < 0 {
-		e.committedCursor = 0
-	}
-	if e.committedCursor > len(e.committedLine) {
-		e.committedCursor = len(e.committedLine)
-	}
-	tail := append([]rune(nil), e.committedLine[e.committedCursor:]...)
-	e.committedLine = append(append(e.committedLine[:e.committedCursor], r...), tail...)
-	e.committedCursor += len(r)
-	if len(e.committedLine) > 256 {
-		drop := len(e.committedLine) - 256
-		e.committedLine = e.committedLine[drop:]
-		e.committedCursor -= drop
-		if e.committedCursor < 0 {
-			e.committedCursor = 0
-		}
-	}
-}
-
-// RecordCommittedBackspace deletes `count` runes before the cursor in the fallback line buffer.
-func (e *Engine) RecordCommittedBackspace(count int) {
-	for i := 0; i < count; i++ {
-		if e.committedCursor > 0 && e.committedCursor <= len(e.committedLine) {
-			e.committedLine = append(e.committedLine[:e.committedCursor-1], e.committedLine[e.committedCursor:]...)
-			e.committedCursor--
-		}
-	}
-}
-
-// RecordCommittedDelete deletes 1 rune at the cursor in the fallback line buffer.
-func (e *Engine) RecordCommittedDelete() {
-	if e.committedCursor >= 0 && e.committedCursor < len(e.committedLine) {
-		e.committedLine = append(e.committedLine[:e.committedCursor], e.committedLine[e.committedCursor+1:]...)
-	}
-}
-
-// MoveCommittedCursor moves the cursor within the fallback line buffer (-1 = Left, +1 = Right, -999 = Home, +999 = End).
-func (e *Engine) MoveCommittedCursor(delta int) {
-	switch {
-	case delta <= -999:
-		e.committedCursor = 0
-	case delta >= 999:
-		e.committedCursor = len(e.committedLine)
-	default:
-		e.committedCursor += delta
-		if e.committedCursor < 0 {
-			e.committedCursor = 0
-		}
-		if e.committedCursor > len(e.committedLine) {
-			e.committedCursor = len(e.committedLine)
-		}
-	}
-}
-
-// CommittedTextBeforeCursor returns the committed text up to the cursor if the cursor is at the end of a word.
-func (e *Engine) CommittedTextBeforeCursor() string {
-	if e.committedCursor <= 0 || e.committedCursor > len(e.committedLine) {
-		return ""
-	}
-	// Only allow re-editing if the cursor is at the end of a word (not in the middle of letters)
-	if e.committedCursor < len(e.committedLine) && unicode.IsLetter(e.committedLine[e.committedCursor]) {
-		return ""
-	}
-	return string(e.committedLine[:e.committedCursor])
 }
 
 // Reset clears the syllable state (called on Space, Enter, Delete, Arrow keys, Mouse click, Focus change).
@@ -277,7 +195,6 @@ func (e *Engine) HandleBackspace() {
 	if len(e.syllable) > 0 {
 		e.syllable = e.syllable[:len(e.syllable)-1]
 	}
-	e.RecordCommittedBackspace(1)
 	// Always unseal the word on BackSpace so the user never has to delete all the way to the first letter!
 	e.wordSealed = false
 	e.lastUndoKey = 0
@@ -285,44 +202,22 @@ func (e *Engine) HandleBackspace() {
 	e.rawHistory = append([]rune(nil), e.syllable...)
 }
 
-// HandleDelete handles hardware Delete key: resets syllable state and deletes 1 char at cursor in fallback line buffer.
+// HandleDelete handles hardware Delete key: since Delete removes the character *after* the cursor
+// (or clears a selection), we simply reset the syllable state without touching the screen.
 func (e *Engine) HandleDelete() {
 	e.Reset()
-	e.RecordCommittedDelete()
-}
-
-// HandleNavigation updates the fallback line cursor on Left(1), Right(2), Home(3), End(4), Delete(5), or Clear(0).
-func (e *Engine) HandleNavigation(navType int) {
-	e.Reset()
-	switch navType {
-	case 1:
-		e.MoveCommittedCursor(-1)
-	case 2:
-		e.MoveCommittedCursor(1)
-	case 3:
-		e.MoveCommittedCursor(-999)
-	case 4:
-		e.MoveCommittedCursor(999)
-	case 5:
-		e.RecordCommittedDelete()
-	default:
-		e.ClearCommittedLine()
-	}
 }
 
 // CheckMacroOnSpace checks if the word just completed before Space matches a configured macro.
 func (e *Engine) CheckMacroOnSpace() (Action, bool) {
 	if !e.Cfg.Enabled || !e.Cfg.EnableMacros || len(e.syllable) == 0 {
 		e.Reset()
-		e.RecordCommittedText(" ")
 		return Action{}, false
 	}
 	word := string(e.syllable)
 	if replacement, ok := e.Cfg.Macros[word]; ok && replacement != "" {
 		bs := len(e.syllable)
 		e.Reset()
-		e.RecordCommittedBackspace(bs)
-		e.RecordCommittedText(replacement + " ")
 		return Action{
 			Swallow:    false, // Let space happen or include space
 			Backspaces: bs,
@@ -330,7 +225,6 @@ func (e *Engine) CheckMacroOnSpace() (Action, bool) {
 		}, true
 	}
 	e.Reset()
-	e.RecordCommittedText(" ")
 	return Action{}, false
 }
 
@@ -367,19 +261,6 @@ func (e *Engine) wouldTransform(ch rune) bool {
 // If Action.Swallow is false, the caller lets the key pass straight through to the app (or commits `string(ch)`).
 // If Action.Swallow is true, the caller intercepts the key, sends Action.Backspaces Backspaces, and injects Action.CommitText.
 func (e *Engine) ProcessKey(ch rune) Action {
-	act := e.processKeyInternal(ch)
-	if e.Cfg.Enabled {
-		if act.Swallow {
-			e.RecordCommittedBackspace(act.Backspaces)
-			e.RecordCommittedText(act.CommitText)
-		} else {
-			e.RecordCommittedText(string(ch))
-		}
-	}
-	return act
-}
-
-func (e *Engine) processKeyInternal(ch rune) Action {
 	if !e.Cfg.Enabled {
 		return Action{Swallow: false}
 	}
@@ -394,16 +275,6 @@ func (e *Engine) processKeyInternal(ch rune) Action {
 	if unicode.IsDigit(ch) && e.Cfg.Mode == ModeTelex {
 		e.Reset()
 		return Action{Swallow: false}
-	}
-
-	// If active syllable is empty (e.g. cursor was moved via Left/Right/Home/End/Backspace to the end of a word),
-	// check if `ch` is a tone/diacritic modifier that validly transforms the word before the cursor!
-	if len(e.syllable) == 0 {
-		if tb := e.CommittedTextBeforeCursor(); tb != "" {
-			if surAct, ok := e.TryModifySurroundingWord(tb, ch); ok && surAct.Swallow {
-				return surAct
-			}
-		}
 	}
 
 	e.rawHistory = append(e.rawHistory, ch)
@@ -511,116 +382,6 @@ func ComputeMinimalDiff(oldSyl, newSyl []rune) (backspaces int, insert string) {
 	return backspaces, insert
 }
 
-// ExtractLastSyllableBeforeCursor extracts the contiguous letter sequence immediately
-// preceding the cursor (at the end of `textBeforeCursor`).
-func ExtractLastSyllableBeforeCursor(textBeforeCursor string) []rune {
-	runes := []rune(textBeforeCursor)
-	if len(runes) == 0 {
-		return nil
-	}
-	end := len(runes)
-	start := end
-	for start > 0 && unicode.IsLetter(runes[start-1]) {
-		start--
-	}
-	word := runes[start:end]
-	if len(word) == 0 || len(word) > 7 {
-		return nil
-	}
-	if start > 0 && unicode.IsDigit(runes[start-1]) {
-		return nil
-	}
-	return word
-}
-
-// IsValidVietnameseSyllableForReedit checks whether a standalone word before the cursor
-// has a valid Vietnamese syllable structure and is not a protected English word.
-func (e *Engine) IsValidVietnameseSyllableForReedit(word []rune) bool {
-	if len(word) == 0 || len(word) > 7 {
-		return false
-	}
-	if e.Cfg.SmartEnglish {
-		rawLower := strings.ToLower(string(word))
-		if commonEnglishTechWords[rawLower] {
-			return false
-		}
-		for i := 0; i < len(word) && i < 3; i++ {
-			if isEnglishOnlyPrefix(word[:i], word[i]) {
-				return false
-			}
-		}
-	}
-	dec := decompose(word)
-	initLower := lowerBaseString(dec.initial)
-	if !validInitials[initLower] {
-		return false
-	}
-	if len(dec.vowels) == 0 {
-		return len(dec.initial) == 1 && (initLower == "d" || initLower == "đ") && len(dec.final) == 0
-	}
-	if len(dec.vowels) > 3 {
-		return false
-	}
-	finalLower := lowerASCIIString(dec.final)
-	if !validFinals[finalLower] {
-		return false
-	}
-	if len(dec.final) > 0 {
-		vBase := lowerBaseString(dec.vowels)
-		if closedVowelNuclei[vBase] {
-			return false
-		}
-	}
-	return true
-}
-
-// TryModifySurroundingWord inspects the word immediately before the cursor when the active syllable buffer
-// is empty (e.g. after moving the cursor to the end of an existing word).
-// If `word` is a valid Vietnamese syllable and `ch` is a tone/diacritic key that validly transforms `word`
-// without triggering a double-key undo, it returns an Action(Swallow=true, Backspaces, CommitText).
-func (e *Engine) TryModifySurroundingWord(textBeforeCursor string, ch rune) (Action, bool) {
-	if !e.Cfg.Enabled || len(e.syllable) > 0 {
-		return Action{}, false
-	}
-	if !unicode.IsLetter(ch) && !unicode.IsDigit(ch) {
-		return Action{}, false
-	}
-	if unicode.IsDigit(ch) && e.Cfg.Mode == ModeTelex {
-		return Action{}, false
-	}
-	word := ExtractLastSyllableBeforeCursor(textBeforeCursor)
-	if !e.IsValidVietnameseSyllableForReedit(word) {
-		return Action{}, false
-	}
-	dec := decompose(word)
-	if !isModifierForSyllable(dec, ch, e.Cfg.Mode) {
-		return Action{}, false
-	}
-
-	savedRaw := e.rawHistory
-	savedDelayedD := e.delayedD
-	e.rawHistory = append(append([]rune(nil), word...), ch)
-	newSyl, transformed, undone := e.tryTransform(word, ch)
-	e.rawHistory = savedRaw
-	e.delayedD = savedDelayedD
-
-	if !transformed || len(newSyl) == 0 || undone {
-		return Action{}, false
-	}
-	if e.Cfg.SmartEnglish && checkAutoRestoreEnglish(newSyl, append(append([]rune(nil), word...), ch)) {
-		return Action{}, false
-	}
-	bs, ins := ComputeMinimalDiff(word, newSyl)
-	if bs == 0 && ins == "" {
-		return Action{}, false
-	}
-	return Action{
-		Swallow:    true,
-		Backspaces: bs,
-		CommitText: ins,
-	}, true
-}
-
 // ProcessKeyForIME processes a printable character for the Native Fcitx5 Engine.
 // Returns:
 // - commitPrefix: any completed syllable (from Sliding Syllable Window or word-ending punctuation/space) to commit immediately
@@ -636,11 +397,9 @@ func (e *Engine) ProcessKeyForIME(ch rune) (commitPrefix string, currentPreedit 
 		if len(e.syllable) > 0 {
 			out := string(e.syllable) + string(ch)
 			e.Reset()
-			e.RecordCommittedText(out)
 			return out, "", true
 		}
 		e.Reset()
-		e.RecordCommittedText(string(ch))
 		return "", "", false
 	}
 
@@ -649,11 +408,9 @@ func (e *Engine) ProcessKeyForIME(ch rune) (commitPrefix string, currentPreedit 
 		if len(e.syllable) > 0 {
 			out := string(e.syllable) + string(ch)
 			e.Reset()
-			e.RecordCommittedText(out)
 			return out, "", true
 		}
 		e.Reset()
-		e.RecordCommittedText(string(ch))
 		return "", "", false
 	}
 
@@ -686,7 +443,6 @@ func (e *Engine) ProcessKeyForIME(ch rune) (commitPrefix string, currentPreedit 
 				prevD = 'D'
 			}
 			finished := string(e.syllable)
-			e.RecordCommittedText(finished)
 			e.syllable = []rune{prevD, ch}
 			e.rawHistory = []rune{prevD, ch}
 			e.delayedD = false
@@ -700,7 +456,6 @@ func (e *Engine) ProcessKeyForIME(ch rune) (commitPrefix string, currentPreedit 
 	// (e.g. nhacdidangnhactieng...), immediately commit the finished syllable and start a fresh 1-char syllable!
 	if e.Cfg.SyllableSplit && shouldSplitNewSyllable(e.syllable, ch, e.Cfg.Mode) {
 		finished := string(e.syllable)
-		e.RecordCommittedText(finished)
 		e.syllable = []rune{ch}
 		e.rawHistory = []rune{ch}
 		e.lastUndoKey = 0
