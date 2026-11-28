@@ -9,6 +9,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/mrtrinhvn/VuiKey/internal/config"
 	"github.com/mrtrinhvn/VuiKey/internal/engine"
@@ -76,12 +77,37 @@ func VuiCoreHandleBackspace(outHandled *C.int) *C.char {
 	mu.Lock()
 	defer mu.Unlock()
 	if len(globalE.CurrentSyllable()) == 0 {
+		globalE.RecordCommittedBackspace(1)
 		*outHandled = 0
 		return C.CString("")
 	}
 	globalE.HandleBackspace()
 	*outHandled = 1
 	return C.CString(globalE.CurrentSyllable())
+}
+
+//export VuiCoreOnClientReset
+func VuiCoreOnClientReset() *C.char {
+	mu.Lock()
+	defer mu.Unlock()
+	syl := globalE.OnClientReset()
+	return C.CString(syl)
+}
+
+//export VuiCoreUpdateCursorRect
+func VuiCoreUpdateCursorRect(x C.int, y C.int, h C.int) {
+	mu.Lock()
+	defer mu.Unlock()
+	globalE.UpdateCursorRect(int(x), int(y), int(h))
+}
+
+//export VuiCoreRecordNavigation
+func VuiCoreRecordNavigation(navType C.int) *C.char {
+	mu.Lock()
+	defer mu.Unlock()
+	syl := globalE.CurrentSyllable()
+	globalE.HandleNavigation(int(navType))
+	return C.CString(syl)
 }
 
 //export VuiCoreProcessKey
@@ -127,6 +153,67 @@ func VuiCoreCheckMacroOnSpace(outBackspaces *C.int, outCommit **C.char) C.int {
 		*outCommit = nil
 		return 0
 	}
+	*outBackspaces = C.int(act.Backspaces)
+	*outCommit = C.CString(act.CommitText)
+	return 1
+}
+
+//export VuiCoreTryModifySurrounding
+func VuiCoreTryModifySurrounding(hasSur C.int, cText *C.char, cursorCharPos C.uint, anchorCharPos C.uint, ch C.uint, outBackspaces *C.int, outCommit **C.char) C.int {
+	mu.Lock()
+	defer mu.Unlock()
+	syncConfigLocked()
+	if len(globalE.CurrentSyllable()) > 0 {
+		*outBackspaces = 0
+		*outCommit = nil
+		return 0
+	}
+	var textBefore string
+	if hasSur != 0 {
+		// Authoritative SurroundingText from application:
+		// 1. If text is selected (cursor != anchor), never modify surrounding word.
+		if cursorCharPos != anchorCharPos {
+			*outBackspaces = 0
+			*outCommit = nil
+			return 0
+		}
+		// 2. If cursor is at index 0 or text is empty, the field before cursor is authoritatively empty!
+		if cText == nil || cursorCharPos == 0 {
+			globalE.ClearCommittedLine()
+			*outBackspaces = 0
+			*outCommit = nil
+			return 0
+		}
+		fullRunes := []rune(C.GoString(cText))
+		pos := int(cursorCharPos)
+		if pos <= 0 || pos > len(fullRunes) {
+			*outBackspaces = 0
+			*outCommit = nil
+			return 0
+		}
+		// 3. Only modify if the cursor is at the END of a word (no letter immediately after cursor)
+		if pos < len(fullRunes) && unicode.IsLetter(fullRunes[pos]) {
+			*outBackspaces = 0
+			*outCommit = nil
+			return 0
+		}
+		textBefore = string(fullRunes[:pos])
+	} else {
+		textBefore = globalE.CommittedTextBeforeCursor()
+	}
+
+	if textBefore == "" {
+		*outBackspaces = 0
+		*outCommit = nil
+		return 0
+	}
+	act, ok := globalE.TryModifySurroundingWord(textBefore, rune(ch))
+	if !ok || !act.Swallow {
+		*outBackspaces = 0
+		*outCommit = nil
+		return 0
+	}
+	globalE.ApplySurroundingReplacement(act.Backspaces, act.CommitText)
 	*outBackspaces = C.int(act.Backspaces)
 	*outCommit = C.CString(act.CommitText)
 	return 1

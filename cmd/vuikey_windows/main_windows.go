@@ -735,26 +735,70 @@ func lowLevelKeyboardProc(nCode int, wParam uintptr, lParam uintptr) uintptr {
 			return 1
 		}
 
-		// Any Ctrl/Alt/Win shortcut resets the active syllable and passes straight through
+		// Any Ctrl/Alt/Win shortcut resets the active syllable and clears committedLine
 		if ctrl || alt || win {
-			eng.Reset()
+			eng.HandleNavigation(0)
 			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
 			return ret
 		}
 
 		switch kb.VkCode {
 		case VK_BACK:
-			eng.HandleBackspace()
+			if shift {
+				eng.HandleNavigation(0)
+			} else {
+				eng.HandleBackspace()
+			}
+			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
+			return ret
+
+		case VK_LEFT:
+			if shift {
+				eng.HandleNavigation(0)
+			} else {
+				eng.HandleNavigation(1)
+			}
+			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
+			return ret
+
+		case VK_RIGHT:
+			if shift {
+				eng.HandleNavigation(0)
+			} else {
+				eng.HandleNavigation(2)
+			}
+			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
+			return ret
+
+		case VK_HOME:
+			if shift {
+				eng.HandleNavigation(0)
+			} else {
+				eng.HandleNavigation(3)
+			}
+			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
+			return ret
+
+		case VK_END:
+			if shift {
+				eng.HandleNavigation(0)
+			} else {
+				eng.HandleNavigation(4)
+			}
 			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
 			return ret
 
 		case VK_DELETE:
-			eng.HandleDelete()
+			if shift {
+				eng.HandleNavigation(0)
+			} else {
+				eng.HandleNavigation(5)
+			}
 			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
 			return ret
 
-		case VK_RETURN, VK_TAB, VK_ESCAPE, VK_LEFT, VK_RIGHT, VK_UP, VK_DOWN, VK_HOME, VK_END, VK_PRIOR, VK_NEXT:
-			eng.Reset()
+		case VK_RETURN, VK_TAB, VK_ESCAPE, VK_UP, VK_DOWN, VK_PRIOR, VK_NEXT:
+			eng.HandleNavigation(0)
 			ret, _, _ := procCallNextHookEx.Call(hKeyHook, uintptr(nCode), wParam, lParam)
 			return ret
 
@@ -785,7 +829,7 @@ func lowLevelKeyboardProc(nCode int, wParam uintptr, lParam uintptr) uintptr {
 func lowLevelMouseProc(nCode int, wParam uintptr, lParam uintptr) uintptr {
 	if nCode >= 0 {
 		if wParam == WM_LBUTTONDOWN || wParam == WM_RBUTTONDOWN || wParam == WM_MBUTTONDOWN {
-			eng.Reset()
+			eng.OnClientReset()
 		}
 	}
 	ret, _, _ := procCallNextHookEx.Call(hMouseHook, uintptr(nCode), wParam, lParam)

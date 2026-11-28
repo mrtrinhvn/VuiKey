@@ -257,6 +257,23 @@ class VuiKeyInputMethodService : InputMethodService() {
                 engine.reset()
                 return super.onKeyDown(keyCode, event)
             }
+            if (engine.currentSyllable.isEmpty() && ic.getSelectedText(0).isNullOrEmpty()) {
+                val after = ic.getTextAfterCursor(1, 0)?.toString() ?: ""
+                if (after.isEmpty() || !after[0].isLetter()) {
+                    val before = ic.getTextBeforeCursor(12, 0)?.toString() ?: ""
+                    val surAct = engine.tryModifySurroundingWord(before, ch)
+                    if (surAct != null && surAct.swallow) {
+                        ic.beginBatchEdit()
+                        if (surAct.backspaces > 0) {
+                            ic.deleteSurroundingText(surAct.backspaces, 0)
+                        }
+                        ic.commitText(surAct.commitText, 1)
+                        ic.endBatchEdit()
+                        updateTopBar()
+                        return true
+                    }
+                }
+            }
             val act = engine.processKey(ch)
             if (act.swallow) {
                 ic.beginBatchEdit()
@@ -529,6 +546,28 @@ class VuiKeyInputMethodService : InputMethodService() {
             }
             updateTopBar()
             return
+        }
+
+        if (engine.currentSyllable.isEmpty() && ic.getSelectedText(0).isNullOrEmpty()) {
+            val after = ic.getTextAfterCursor(1, 0)?.toString() ?: ""
+            if (after.isEmpty() || !after[0].isLetter()) {
+                val before = ic.getTextBeforeCursor(12, 0)?.toString() ?: ""
+                val surAct = engine.tryModifySurroundingWord(before, ch)
+                if (surAct != null && surAct.swallow) {
+                    ic.beginBatchEdit()
+                    if (surAct.backspaces > 0) {
+                        ic.deleteSurroundingText(surAct.backspaces, 0)
+                    }
+                    ic.commitText(surAct.commitText, 1)
+                    ic.endBatchEdit()
+                    if (isShifted && !isCapsLocked) {
+                        isShifted = false
+                        rebuildKeyboardRows()
+                    }
+                    updateTopBar()
+                    return
+                }
+            }
         }
 
         val act = engine.processKey(ch)
